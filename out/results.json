@@ -6,8 +6,8 @@
     "audit_rows": 438
   },
   "throughput": {
-    "seconds": 0.09127860001171939,
-    "transactions_per_second": 4732.76321004633
+    "seconds": 0.13686839997535571,
+    "transactions_per_second": 3156.3165791211495
   },
   "conservation": {
     "operations_checked": 17,
@@ -261,7 +261,7 @@
       "Cascade Transit",
       "Northwind Rail"
     ],
-    "query_seconds": 0.0006893000099807978,
+    "query_seconds": 0.001014699984807521,
     "n_actions": 18,
     "expected_units": [
       "WO-1001-U001",
@@ -315,8 +315,8 @@
   },
   "birth_certificate": {
     "unit": "WO-1001-U004",
-    "ms_per_document": 0.4158120002830401,
+    "ms_per_document": 0.4554739990271628,
     "text": "BUILD RECORD \u2014 unit WO-1001-U004\n  product      : BRKT-100\n  work order   : WO-1001 (order qty 12)\n  serial / lot : SN1001004 / -\n  status       : COMPLETE\n\n  OPERATIONS\n    op  10  START         by OP-01  at WC-CUT   2026-07-01T07:56:16\n    op  10  COMPLETE      by OP-01  at WC-CUT   2026-07-01T07:56:16\n    op  20  START         by OP-02  at WC-WELD  2026-07-01T08:00:32\n    op  20  COMPLETE      by OP-02  at WC-WELD  2026-07-01T08:00:32\n    op  30  START         by OP-01  at WC-MACH  2026-07-01T08:03:33\n    op  30  COMPLETE      by OP-01  at WC-MACH  2026-07-01T08:03:33\n    op  40  START         by OP-05  at WC-PAINT 2026-07-01T08:11:22\n    op  40  COMPLETE      by OP-05  at WC-PAINT 2026-07-01T08:11:22\n    op  50  START         by OP-03  at WC-INSP  2026-07-01T08:14:27\n    op  40  REWORK_ENTRY  by OP-03  at -        2026-07-01T08:14:27  (NCR-1)\n    op  40  START         by OP-01  at WC-PAINT 2026-07-01T08:23:55\n    op  40  COMPLETE      by OP-01  at WC-PAINT 2026-07-01T08:23:55\n    op  50  START         by OP-03  at WC-INSP  2026-07-01T08:27:07\n    op  50  COMPLETE      by OP-03  at WC-INSP  2026-07-01T08:27:07\n\n  MATERIAL CONSUMED\n    op  10  STEEL-BAR    lot L-4471-A     qty 1.0     supplier Meridian Steel (split from L-4471)\n    op  20  WELD-WIRE    lot L-7001       qty 0.4     supplier Arcline\n    op  20  GUSSET       lot L-7002       qty 2.0     supplier Peninsula Fab\n    op  40  POWDER       lot L-7003       qty 0.15    supplier ChromaCoat\n    op  40  POWDER       lot L-7003       qty 0.15    supplier ChromaCoat\n\n  NONCONFORMANCES\n    NCR-1 op 50 coating blemish -> REWORK (approved OP-03)\n\n  SHIPPED  SH-9001 to Northwind Rail on 2026-07-01"
   },
-  "wall_seconds": 0.23225020000245422
+  "wall_seconds": 0.27865839999867603
 }

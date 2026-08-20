@@ -165,8 +165,17 @@ def issue_material(conn, unit_id: str, seq: int, lot_id: str, qty: float,
     #
     # So the expected quantity scales with the number of passes: one for the
     # original, plus one per rework entry at this operation.
+    # A rework re-entry at operation N restarts the pass for EVERY operation from
+    # N onward, not just for N itself -- a unit sent back to op 10 runs 10, 20, 30
+    # again, and each of those consumes its materials again.
+    #
+    # The first version counted rework entries only at THIS operation, which was
+    # correct for the one rework pattern the original generator produced (40 -> 50,
+    # one step back) and wrong for every other. Property testing with randomly
+    # chosen re-entry points found it immediately: a unit reworked to op 10 was
+    # refused at op 20 for a 200% over-issue that was entirely legitimate.
     passes = 1 + conn.execute(
-        "SELECT COUNT(*) AS n FROM op_record WHERE unit_id=? AND seq=? "
+        "SELECT COUNT(*) AS n FROM op_record WHERE unit_id=? AND seq<=? "
         "AND action='REWORK_ENTRY'", (unit_id, seq)).fetchone()["n"]
     expected = bom["qty_per"] * (u["lot_qty"] or 1) * passes
     already = conn.execute(
@@ -219,10 +228,14 @@ def complete_operation(conn, unit_id: str, seq: int, op_id: str, wc_id: str,
         (unit_id, seq)).fetchone()
     if not started:
         raise PrecedenceError(f"unit {unit_id} op {seq} was never started")
+    # The current pass begins at the most recent rework entry targeting THIS
+    # operation or any EARLIER one -- see the note in issue_material. Scoping the
+    # boundary to `seq=?` only was wrong for any rework that re-entered more than
+    # one operation back, and refused legitimate completions.
     already = conn.execute(
         "SELECT 1 FROM op_record WHERE unit_id=? AND seq=? AND action='COMPLETE' "
         "AND rec_id > COALESCE((SELECT MAX(rec_id) FROM op_record WHERE unit_id=? "
-        "AND seq=? AND action='REWORK_ENTRY'), 0)",
+        "AND seq<=? AND action='REWORK_ENTRY'), 0)",
         (unit_id, seq, unit_id, seq)).fetchone()
     if already:
         raise ConservationError(
@@ -243,14 +256,43 @@ def complete_operation(conn, unit_id: str, seq: int, op_id: str, wc_id: str,
 
 def scrap(conn, unit_id: str, seq: int, op_id: str, wc_id: str, reason: str,
           qty: float | None = None, ts=None) -> None:
+    """Scrap all or PART of a unit.
+
+    PARTIAL SCRAP IS THE LOT MODEL'S WHOLE POINT, and the first version of this
+    function got it wrong in a way that only showed when the lot-tracked product
+    was finally run: it set `status='SCRAPPED'` unconditionally, so scrapping 25
+    plates out of a batch of 400 scrapped the entire batch and the next operation
+    refused to start.
+
+    For a serialised unit the old behaviour is right -- a unit is one object and
+    scrapping it scraps it. For a lot-tracked batch it is wrong: the batch carries
+    a quantity, some of which can be scrapped while the rest continues. So the
+    status change is now conditional on the scrap consuming the whole REMAINING
+    quantity, which makes a serial unit the degenerate case of a batch of one
+    rather than a separate code path.
+    """
     u = _unit(conn, unit_id)
+    full_qty = u["lot_qty"] or 1
+    q = qty if qty is not None else full_qty
+
+    already = conn.execute(
+        "SELECT COALESCE(SUM(qty),0) AS q FROM op_record "
+        "WHERE unit_id=? AND action='SCRAP'", (unit_id,)).fetchone()["q"]
+    remaining = full_qty - already
+
+    if q > remaining + 1e-9:
+        raise ConservationError(
+            f"cannot scrap {q} from {unit_id}: only {remaining} remaining "
+            f"of {full_qty}")
+
     conn.execute(
         "INSERT INTO op_record (wo_id, unit_id, seq, action, qty, op_id, wc_id, "
         "reason, ts) VALUES (?,?,?,'SCRAP',?,?,?,?,?)",
-        (u["wo_id"], unit_id, seq, qty if qty is not None else (u["lot_qty"] or 1),
-         op_id, wc_id, reason, _now(ts)))
-    conn.execute("UPDATE unit SET status='SCRAPPED' WHERE unit_id=?", (unit_id,))
-    audit(conn, op_id, wc_id, "SCRAP", unit_id, f"seq={seq} reason={reason}", _now(ts))
+        (u["wo_id"], unit_id, seq, q, op_id, wc_id, reason, _now(ts)))
+    if q >= remaining - 1e-9:
+        conn.execute("UPDATE unit SET status='SCRAPPED' WHERE unit_id=?", (unit_id,))
+    audit(conn, op_id, wc_id, "SCRAP", unit_id,
+          f"seq={seq} qty={q} of {remaining} remaining reason={reason}", _now(ts))
 
 
 def raise_ncr(conn, unit_id: str, seq: int, defect: str, ts=None) -> int:
@@ -344,14 +386,48 @@ def conservation_report(conn, wo_id: str | None = None) -> list[dict]:
     #     started = completed + scrapped + nonconformances + in_process
     # and the NCR term is what makes a reworked unit balance.
     ncr_where = "WHERE u.wo_id = ?" if wo_id else ""
-    ncrs = {
-        (r["wo_id"], r["seq"]): r["n"]
-        for r in conn.execute(f"""
-            SELECT u.wo_id, n.seq, COUNT(*) AS n
-            FROM ncr n JOIN unit u ON u.unit_id = n.unit_id {ncr_where}
-            GROUP BY u.wo_id, n.seq
-        """, args).fetchall()
-    }
+    # An NCR consumes a START only if it TERMINATED that pass -- i.e. the unit
+    # did not complete the operation on that pass. Both orderings are legitimate
+    # and both occur:
+    #
+    #   START -> NCR                  inspection failed; the pass ends undone, so
+    #                                 the NCR is what balances the start
+    #   START -> COMPLETE -> NCR      the operation finished and a defect was
+    #                                 found afterwards (at a later inspection, or
+    #                                 on audit). The pass DID complete; counting
+    #                                 the NCR again would double-count it.
+    #
+    # The first version counted every NCR, which balanced the original generator
+    # (where inspection failure replaced the completion) and went negative as soon
+    # as property testing produced the other ordering -- 12 phantom units of
+    # negative WIP at op 20. Negative in-process is not a rounding artefact; it is
+    # the ledger reporting that more work left an operation than entered it.
+    ncr_rows = conn.execute(f"""
+        SELECT u.wo_id, n.seq, n.unit_id, n.ncr_id
+        FROM ncr n JOIN unit u ON u.unit_id = n.unit_id {ncr_where}
+    """, args).fetchall() if True else []
+
+    ledger = conn.execute(
+        "SELECT unit_id, seq, action, rec_id FROM op_record ORDER BY rec_id"
+    ).fetchall()
+    by_unit_seq: dict[tuple, list] = {}
+    for r in ledger:
+        by_unit_seq.setdefault((r["unit_id"], r["seq"]), []).append(
+            (r["rec_id"], r["action"]))
+
+    terminating: dict[tuple, int] = {}
+    for n in ncr_rows:
+        events = by_unit_seq.get((n["unit_id"], n["seq"]), [])
+        # Did this operation complete at least as many times as it started, for
+        # the pass the NCR belongs to? Approximate the pass by comparing counts:
+        # if COMPLETEs >= STARTs, every pass finished and the NCR is a
+        # post-completion disposition.
+        starts = sum(1 for _, a in events if a == "START")
+        completes = sum(1 for _, a in events if a == "COMPLETE")
+        if completes < starts:
+            key = (n["wo_id"], n["seq"])
+            terminating[key] = terminating.get(key, 0) + 1
+    ncrs = terminating
 
     out = []
     for r in rows:

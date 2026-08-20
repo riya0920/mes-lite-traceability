@@ -1,9 +1,10 @@
 # SE-2 — MES-Lite: Work Order Execution & Traceability
 
-**Status: ~20% slice.** The domain model, the execution rules with their refusals,
+**Status: ~50% slice.** The domain model, the execution rules with their refusals,
 consumption-at-operation genealogy, rework re-entry, and the one-command recall
-drill are built and verified against planted ground truth. Scheduling, capacity,
-the operator UI, and concurrency testing are not.
+drill are built and verified against planted ground truth, along with the
+lot-tracked model, property-based rework testing and a dispatch list. Finite
+scheduling, the operator UI, and concurrency testing are not.
 
 ```bash
 python run_mes.py
@@ -121,7 +122,15 @@ dose of powder on a repainted bracket read as a 200% over-issue and the system
 refused it. That is not a strict system, it is an unusable one: the plant's
 response is to issue the material against some other unit, and the genealogy
 silently becomes fiction. The budget is now **per pass** — expected quantity
-scales with `1 + rework entries at that operation`.
+scales with `1 + rework entries at or before that operation`.
+
+**And the second pass found that this fix was still half wrong.** "Rework entries
+*at* that operation" was correct only for the one pattern the original generator
+produced — reworking a single step back. A unit sent from op 40 back to op 10 runs
+ops 10, 20 and 30 again, and each legitimately consumes its materials again; the
+scope had to widen to `seq ≤ N`. Property testing with random re-entry points found
+it on the first case. Same story for the completion boundary. Both are covered by
+regression tests in `tests/test_rework_properties.py`.
 
 **A second bug, in the generator rather than the model.** Rework was originally
 left to a 12% coin flip per unit. It came up tails 27 times in a row, and the
@@ -160,7 +169,27 @@ consumption and scrap go *up*. Planning, costing, purchasing, MRP and the genera
 ledger are level 4 and are deliberately absent. A system that plans its own orders
 is not an MES.
 
-## What is NOT built (the other 80%)
+## Built in the second pass — see [docs/EXTENSIONS.md](docs/EXTENSIONS.md)
+
+`python extend.py` — three gaps this README previously named, and the property
+testing **found three real bugs in the execution rules**:
+
+- **The lot-tracked model, actually run.** It was defined and never exercised.
+  Running it immediately exposed that `scrap()` killed the whole batch on a partial
+  scrap — 25 plates of 400 failing at drilling scrapped all 400.
+- **Property-based rework testing.** 200 randomly generated routing histories with
+  0–3 rework loops re-entering at random earlier operations: **0 property
+  failures, 0 conservation violations, 294 rework entries**. Getting there required
+  two more fixes, both invisible to the original generator because it only ever
+  reworked one step back:
+  - a rework at op N restarts the pass for **every** operation from N onward, so
+    the over-issue budget and the completion boundary must both scope to `seq ≤ N`
+  - an NCR consumes a START only if it **terminated** that pass; counting a
+    post-completion NCR produced 12 units of *negative* work-in-process
+- **A dispatch list**, derived entirely from the execution ledger so it cannot
+  disagree with the record, sorted by hours per resource rather than unit count.
+
+## What is NOT built (the other 50%)
 
 1. **No concurrency testing.** The spec asks for two operators completing the same
    serialised unit's operation with one winning cleanly. SQLite serialises writers,

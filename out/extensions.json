@@ -1,0 +1,111 @@
+{
+  "lot_tracked": {
+    "work_order": "WO-2001",
+    "batch_qty": 400,
+    "scrapped_within_batch": 25,
+    "conservation": [
+      {
+        "wo_id": "WO-2001",
+        "seq": 10,
+        "started": 400.0,
+        "completed": 400.0,
+        "scrapped": 0,
+        "reworked": 0,
+        "nonconformances": 0,
+        "in_process": 0.0,
+        "violates": false
+      },
+      {
+        "wo_id": "WO-2001",
+        "seq": 20,
+        "started": 400.0,
+        "completed": 375.0,
+        "scrapped": 25.0,
+        "reworked": 0,
+        "nonconformances": 0,
+        "in_process": 0.0,
+        "violates": false
+      },
+      {
+        "wo_id": "WO-2001",
+        "seq": 30,
+        "started": 400.0,
+        "completed": 375.0,
+        "scrapped": 0,
+        "reworked": 0,
+        "nonconformances": 0,
+        "in_process": 25.0,
+        "violates": false
+      }
+    ],
+    "violations": 0,
+    "recall_units_from_L8001": 1,
+    "recall_granularity": "batch of 400 (one unit row)"
+  },
+  "properties": {
+    "cases_generated": 200,
+    "cases_completed": 200,
+    "property_failures": [],
+    "n_property_failures": 0,
+    "conservation_violations": 0,
+    "operations_checked": 5,
+    "total_rework_entries": 294
+  },
+  "dispatch": {
+    "queues": [
+      {
+        "work_center": "WC-WELD",
+        "capacity": 2,
+        "units_queued": 5,
+        "queued_work_hours": 0.25,
+        "hours_per_resource": 0.125,
+        "next_units": [
+          "WO-4001-U000",
+          "WO-4001-U004",
+          "WO-4001-U008",
+          "WO-4001-U012"
+        ]
+      },
+      {
+        "work_center": "WC-MACH",
+        "capacity": 3,
+        "units_queued": 5,
+        "queued_work_hours": 0.3333333333333333,
+        "hours_per_resource": 0.1111111111111111,
+        "next_units": [
+          "WO-4001-U001",
+          "WO-4001-U005",
+          "WO-4001-U009",
+          "WO-4001-U013"
+        ]
+      },
+      {
+        "work_center": "WC-INSP",
+        "capacity": 2,
+        "units_queued": 4,
+        "queued_work_hours": 0.13333333333333333,
+        "hours_per_resource": 0.06666666666666667,
+        "next_units": [
+          "WO-4001-U003",
+          "WO-4001-U007",
+          "WO-4001-U011",
+          "WO-4001-U015"
+        ]
+      },
+      {
+        "work_center": "WC-PAINT",
+        "capacity": 1,
+        "units_queued": 4,
+        "queued_work_hours": 0.06666666666666667,
+        "hours_per_resource": 0.06666666666666667,
+        "next_units": [
+          "WO-4001-U002",
+          "WO-4001-U006",
+          "WO-4001-U010",
+          "WO-4001-U014"
+        ]
+      }
+    ]
+  },
+  "wall_seconds": 2.648709700035397
+}
