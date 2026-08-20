@@ -1,0 +1,322 @@
+{
+  "counts": {
+    "units": 33,
+    "op_records": 309,
+    "genealogy_edges": 123,
+    "audit_rows": 438
+  },
+  "throughput": {
+    "seconds": 0.09127860001171939,
+    "transactions_per_second": 4732.76321004633
+  },
+  "conservation": {
+    "operations_checked": 17,
+    "violations": 0,
+    "detail": [
+      {
+        "wo_id": "WO-1001",
+        "seq": 10,
+        "started": 12.0,
+        "completed": 12.0,
+        "scrapped": 0,
+        "reworked": 0,
+        "nonconformances": 0,
+        "in_process": 0.0,
+        "violates": false
+      },
+      {
+        "wo_id": "WO-1001",
+        "seq": 20,
+        "started": 12.0,
+        "completed": 12.0,
+        "scrapped": 0,
+        "reworked": 0,
+        "nonconformances": 0,
+        "in_process": 0.0,
+        "violates": false
+      },
+      {
+        "wo_id": "WO-1001",
+        "seq": 30,
+        "started": 12.0,
+        "completed": 11.0,
+        "scrapped": 1.0,
+        "reworked": 0,
+        "nonconformances": 0,
+        "in_process": 0.0,
+        "violates": false
+      },
+      {
+        "wo_id": "WO-1001",
+        "seq": 40,
+        "started": 13.0,
+        "completed": 13.0,
+        "scrapped": 0,
+        "reworked": 2.0,
+        "nonconformances": 0,
+        "in_process": 0.0,
+        "violates": false
+      },
+      {
+        "wo_id": "WO-1001",
+        "seq": 50,
+        "started": 13.0,
+        "completed": 11.0,
+        "scrapped": 0,
+        "reworked": 0,
+        "nonconformances": 2,
+        "in_process": 0.0,
+        "violates": false
+      },
+      {
+        "wo_id": "WO-1002",
+        "seq": 10,
+        "started": 8.0,
+        "completed": 8.0,
+        "scrapped": 0,
+        "reworked": 0,
+        "nonconformances": 0,
+        "in_process": 0.0,
+        "violates": false
+      },
+      {
+        "wo_id": "WO-1002",
+        "seq": 20,
+        "started": 8.0,
+        "completed": 8.0,
+        "scrapped": 0,
+        "reworked": 0,
+        "nonconformances": 0,
+        "in_process": 0.0,
+        "violates": false
+      },
+      {
+        "wo_id": "WO-1002",
+        "seq": 30,
+        "started": 8.0,
+        "completed": 7.0,
+        "scrapped": 1.0,
+        "reworked": 0,
+        "nonconformances": 0,
+        "in_process": 0.0,
+        "violates": false
+      },
+      {
+        "wo_id": "WO-1002",
+        "seq": 40,
+        "started": 8.0,
+        "completed": 8.0,
+        "scrapped": 0,
+        "reworked": 1.0,
+        "nonconformances": 0,
+        "in_process": 0.0,
+        "violates": false
+      },
+      {
+        "wo_id": "WO-1002",
+        "seq": 50,
+        "started": 8.0,
+        "completed": 7.0,
+        "scrapped": 0,
+        "reworked": 0,
+        "nonconformances": 1,
+        "in_process": 0.0,
+        "violates": false
+      },
+      {
+        "wo_id": "WO-1003",
+        "seq": 10,
+        "started": 10.0,
+        "completed": 10.0,
+        "scrapped": 0,
+        "reworked": 0,
+        "nonconformances": 0,
+        "in_process": 0.0,
+        "violates": false
+      },
+      {
+        "wo_id": "WO-1003",
+        "seq": 20,
+        "started": 10.0,
+        "completed": 10.0,
+        "scrapped": 0,
+        "reworked": 0,
+        "nonconformances": 0,
+        "in_process": 0.0,
+        "violates": false
+      },
+      {
+        "wo_id": "WO-1003",
+        "seq": 30,
+        "started": 10.0,
+        "completed": 9.0,
+        "scrapped": 1.0,
+        "reworked": 0,
+        "nonconformances": 0,
+        "in_process": 0.0,
+        "violates": false
+      },
+      {
+        "wo_id": "WO-1003",
+        "seq": 40,
+        "started": 10.0,
+        "completed": 10.0,
+        "scrapped": 0,
+        "reworked": 1.0,
+        "nonconformances": 0,
+        "in_process": 0.0,
+        "violates": false
+      },
+      {
+        "wo_id": "WO-1003",
+        "seq": 50,
+        "started": 10.0,
+        "completed": 9.0,
+        "scrapped": 0,
+        "reworked": 0,
+        "nonconformances": 1,
+        "in_process": 0.0,
+        "violates": false
+      },
+      {
+        "wo_id": "WO-9999",
+        "seq": 10,
+        "started": 2.0,
+        "completed": 2.0,
+        "scrapped": 0,
+        "reworked": 0,
+        "nonconformances": 0,
+        "in_process": 0.0,
+        "violates": false
+      },
+      {
+        "wo_id": "WO-9999",
+        "seq": 30,
+        "started": 1.0,
+        "completed": 0,
+        "scrapped": 0,
+        "reworked": 0,
+        "nonconformances": 0,
+        "in_process": 1.0,
+        "violates": false
+      }
+    ]
+  },
+  "enforcement": {
+    "attempted": {
+      "precedence": 1,
+      "certification": 1,
+      "over_issue": 1,
+      "off_bom_component": 1,
+      "double_completion": 1,
+      "insufficient_lot": 1,
+      "authorised_deviation_allowed": 1
+    },
+    "blocked": {
+      "precedence": 1,
+      "certification": 1,
+      "over_issue": 1,
+      "off_bom_component": 1,
+      "double_completion": 1,
+      "insufficient_lot": 1,
+      "authorised_deviation_allowed": 0
+    }
+  },
+  "recall": {
+    "recalled_lot": "L-4471",
+    "lots_in_scope": [
+      "L-4471",
+      "L-4471-A",
+      "L-4471-B"
+    ],
+    "units_affected": 20,
+    "shipped": [
+      "WO-1001-U001",
+      "WO-1001-U002",
+      "WO-1001-U003",
+      "WO-1001-U004",
+      "WO-1001-U005",
+      "WO-1002-U001",
+      "WO-1002-U002",
+      "WO-1002-U003",
+      "WO-1002-U004",
+      "WO-1002-U005"
+    ],
+    "finished_on_hand": [
+      "WO-1001-U007",
+      "WO-1001-U008",
+      "WO-1001-U009",
+      "WO-1001-U010",
+      "WO-1001-U011",
+      "WO-1001-U012",
+      "WO-1002-U007",
+      "WO-1002-U008"
+    ],
+    "in_process": [],
+    "already_scrapped": [
+      "WO-1001-U006",
+      "WO-1002-U006"
+    ],
+    "customers": [
+      "Cascade Transit",
+      "Northwind Rail"
+    ],
+    "query_seconds": 0.0006893000099807978,
+    "n_actions": 18,
+    "expected_units": [
+      "WO-1001-U001",
+      "WO-1001-U002",
+      "WO-1001-U003",
+      "WO-1001-U004",
+      "WO-1001-U005",
+      "WO-1001-U006",
+      "WO-1001-U007",
+      "WO-1001-U008",
+      "WO-1001-U009",
+      "WO-1001-U010",
+      "WO-1001-U011",
+      "WO-1001-U012",
+      "WO-1002-U001",
+      "WO-1002-U002",
+      "WO-1002-U003",
+      "WO-1002-U004",
+      "WO-1002-U005",
+      "WO-1002-U006",
+      "WO-1002-U007",
+      "WO-1002-U008"
+    ],
+    "found_units": [
+      "WO-1001-U001",
+      "WO-1001-U002",
+      "WO-1001-U003",
+      "WO-1001-U004",
+      "WO-1001-U005",
+      "WO-1001-U006",
+      "WO-1001-U007",
+      "WO-1001-U008",
+      "WO-1001-U009",
+      "WO-1001-U010",
+      "WO-1001-U011",
+      "WO-1001-U012",
+      "WO-1002-U001",
+      "WO-1002-U002",
+      "WO-1002-U003",
+      "WO-1002-U004",
+      "WO-1002-U005",
+      "WO-1002-U006",
+      "WO-1002-U007",
+      "WO-1002-U008"
+    ],
+    "missed": [],
+    "false_positives": [],
+    "control_group_leaked": [],
+    "complete": true,
+    "naive_query_units": 0
+  },
+  "birth_certificate": {
+    "unit": "WO-1001-U004",
+    "ms_per_document": 0.4158120002830401,
+    "text": "BUILD RECORD \u2014 unit WO-1001-U004\n  product      : BRKT-100\n  work order   : WO-1001 (order qty 12)\n  serial / lot : SN1001004 / -\n  status       : COMPLETE\n\n  OPERATIONS\n    op  10  START         by OP-01  at WC-CUT   2026-07-01T07:56:16\n    op  10  COMPLETE      by OP-01  at WC-CUT   2026-07-01T07:56:16\n    op  20  START         by OP-02  at WC-WELD  2026-07-01T08:00:32\n    op  20  COMPLETE      by OP-02  at WC-WELD  2026-07-01T08:00:32\n    op  30  START         by OP-01  at WC-MACH  2026-07-01T08:03:33\n    op  30  COMPLETE      by OP-01  at WC-MACH  2026-07-01T08:03:33\n    op  40  START         by OP-05  at WC-PAINT 2026-07-01T08:11:22\n    op  40  COMPLETE      by OP-05  at WC-PAINT 2026-07-01T08:11:22\n    op  50  START         by OP-03  at WC-INSP  2026-07-01T08:14:27\n    op  40  REWORK_ENTRY  by OP-03  at -        2026-07-01T08:14:27  (NCR-1)\n    op  40  START         by OP-01  at WC-PAINT 2026-07-01T08:23:55\n    op  40  COMPLETE      by OP-01  at WC-PAINT 2026-07-01T08:23:55\n    op  50  START         by OP-03  at WC-INSP  2026-07-01T08:27:07\n    op  50  COMPLETE      by OP-03  at WC-INSP  2026-07-01T08:27:07\n\n  MATERIAL CONSUMED\n    op  10  STEEL-BAR    lot L-4471-A     qty 1.0     supplier Meridian Steel (split from L-4471)\n    op  20  WELD-WIRE    lot L-7001       qty 0.4     supplier Arcline\n    op  20  GUSSET       lot L-7002       qty 2.0     supplier Peninsula Fab\n    op  40  POWDER       lot L-7003       qty 0.15    supplier ChromaCoat\n    op  40  POWDER       lot L-7003       qty 0.15    supplier ChromaCoat\n\n  NONCONFORMANCES\n    NCR-1 op 50 coating blemish -> REWORK (approved OP-03)\n\n  SHIPPED  SH-9001 to Northwind Rail on 2026-07-01"
+  },
+  "wall_seconds": 0.23225020000245422
+}

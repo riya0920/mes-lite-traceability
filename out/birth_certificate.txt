@@ -1,0 +1,33 @@
+BUILD RECORD — unit WO-1001-U004
+  product      : BRKT-100
+  work order   : WO-1001 (order qty 12)
+  serial / lot : SN1001004 / -
+  status       : COMPLETE
+
+  OPERATIONS
+    op  10  START         by OP-01  at WC-CUT   2026-07-01T07:56:16
+    op  10  COMPLETE      by OP-01  at WC-CUT   2026-07-01T07:56:16
+    op  20  START         by OP-02  at WC-WELD  2026-07-01T08:00:32
+    op  20  COMPLETE      by OP-02  at WC-WELD  2026-07-01T08:00:32
+    op  30  START         by OP-01  at WC-MACH  2026-07-01T08:03:33
+    op  30  COMPLETE      by OP-01  at WC-MACH  2026-07-01T08:03:33
+    op  40  START         by OP-05  at WC-PAINT 2026-07-01T08:11:22
+    op  40  COMPLETE      by OP-05  at WC-PAINT 2026-07-01T08:11:22
+    op  50  START         by OP-03  at WC-INSP  2026-07-01T08:14:27
+    op  40  REWORK_ENTRY  by OP-03  at -        2026-07-01T08:14:27  (NCR-1)
+    op  40  START         by OP-01  at WC-PAINT 2026-07-01T08:23:55
+    op  40  COMPLETE      by OP-01  at WC-PAINT 2026-07-01T08:23:55
+    op  50  START         by OP-03  at WC-INSP  2026-07-01T08:27:07
+    op  50  COMPLETE      by OP-03  at WC-INSP  2026-07-01T08:27:07
+
+  MATERIAL CONSUMED
+    op  10  STEEL-BAR    lot L-4471-A     qty 1.0     supplier Meridian Steel (split from L-4471)
+    op  20  WELD-WIRE    lot L-7001       qty 0.4     supplier Arcline
+    op  20  GUSSET       lot L-7002       qty 2.0     supplier Peninsula Fab
+    op  40  POWDER       lot L-7003       qty 0.15    supplier ChromaCoat
+    op  40  POWDER       lot L-7003       qty 0.15    supplier ChromaCoat
+
+  NONCONFORMANCES
+    NCR-1 op 50 coating blemish -> REWORK (approved OP-03)
+
+  SHIPPED  SH-9001 to Northwind Rail on 2026-07-01
