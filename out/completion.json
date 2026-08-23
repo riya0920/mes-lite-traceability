@@ -1,0 +1,297 @@
+{
+ "quick": true,
+ "concurrency": {
+  "migration": {
+   "column_added": true,
+   "index": "ux_one_complete_per_pass"
+  },
+  "guarded": {
+   "n_threads": 8,
+   "winners": 1,
+   "losers": 7,
+   "exactly_one_won": true,
+   "loss_reasons": [
+    "duplicate completion for this pass"
+   ],
+   "results": [
+    {
+     "ok": true,
+     "pass_no": 0
+    },
+    {
+     "ok": false,
+     "reason": "duplicate completion for this pass",
+     "detail": "UNIQUE constraint failed: op_record.unit_id, op_record.seq, op_record.pass_no",
+     "pass_no": 0
+    },
+    {
+     "ok": false,
+     "reason": "duplicate completion for this pass",
+     "detail": "UNIQUE constraint failed: op_record.unit_id, op_record.seq, op_record.pass_no",
+     "pass_no": 0
+    },
+    {
+     "ok": false,
+     "reason": "duplicate completion for this pass",
+     "detail": "UNIQUE constraint failed: op_record.unit_id, op_record.seq, op_record.pass_no",
+     "pass_no": 0
+    },
+    {
+     "ok": false,
+     "reason": "duplicate completion for this pass",
+     "detail": "UNIQUE constraint failed: op_record.unit_id, op_record.seq, op_record.pass_no",
+     "pass_no": 0
+    },
+    {
+     "ok": false,
+     "reason": "duplicate completion for this pass",
+     "detail": "UNIQUE constraint failed: op_record.unit_id, op_record.seq, op_record.pass_no",
+     "pass_no": 0
+    },
+    {
+     "ok": false,
+     "reason": "duplicate completion for this pass",
+     "detail": "UNIQUE constraint failed: op_record.unit_id, op_record.seq, op_record.pass_no",
+     "pass_no": 0
+    },
+    {
+     "ok": false,
+     "reason": "duplicate completion for this pass",
+     "detail": "UNIQUE constraint failed: op_record.unit_id, op_record.seq, op_record.pass_no",
+     "pass_no": 0
+    }
+   ]
+  },
+  "unguarded": {
+   "n_threads": 8,
+   "winners": 8,
+   "losers": 0,
+   "exactly_one_won": false
+  },
+  "why": "BEGIN IMMEDIATE takes the write lock at the START of the transaction so the read happens inside it; the UNIQUE index makes the invariant true in the schema, which is what holds against a client that forgets the transaction"
+ },
+ "scheduling": {
+  "n_jobs": 20,
+  "capacity": {
+   "WC-CUT": 2,
+   "WC-WELD": 1,
+   "WC-MACH": 2,
+   "WC-PAINT": 1,
+   "WC-INSP": 1
+  },
+  "infinite": {
+   "makespan": 1031.0,
+   "mean_flow_time": 404.65,
+   "n_late": 11,
+   "total_tardiness": 1865.583679195539
+  },
+  "rules": [
+   {
+    "rule": "FIFO",
+    "makespan": 2079.0,
+    "mean_flow_time": 1057.8,
+    "max_lateness": 1381.375366832294,
+    "n_late": 16,
+    "total_tardiness": 12737.613760758988,
+    "mean_queue_time": 653.15,
+    "queue_share_of_flow": 0.6174607676309322
+   },
+   {
+    "rule": "SPT",
+    "makespan": 2185.0,
+    "mean_flow_time": 963.8,
+    "max_lateness": 1253.6713383521871,
+    "n_late": 16,
+    "total_tardiness": 10376.768126634712,
+    "mean_queue_time": 559.15,
+    "queue_share_of_flow": 0.5801514837103133
+   },
+   {
+    "rule": "EDD",
+    "makespan": 2146.0,
+    "mean_flow_time": 972.75,
+    "max_lateness": 975.6713383521871,
+    "n_late": 17,
+    "total_tardiness": 10749.894134913871,
+    "mean_queue_time": 568.1,
+    "queue_share_of_flow": 0.5840143921870984
+   },
+   {
+    "rule": "CR",
+    "makespan": 2185.0,
+    "mean_flow_time": 963.7,
+    "max_lateness": 1253.6713383521871,
+    "n_late": 17,
+    "total_tardiness": 10568.894134913871,
+    "mean_queue_time": 559.05,
+    "queue_share_of_flow": 0.580107917401681
+   }
+  ],
+  "finite_vs_infinite_flow": 2.614110960088966,
+  "queue_share_of_flow": 0.6174607676309322,
+  "calendar": {
+   "makespan_no_calendar": 2079.0,
+   "makespan_with_calendar": 3447.0,
+   "inflation": 1.658008658008658
+  },
+  "calendar_example": {
+   "start": 840,
+   "end": 1820.0,
+   "working_minutes": 480,
+   "elapsed_minutes": 980.0,
+   "calendar_inflation": 2.0416666666666665
+  }
+ },
+ "integration": {
+  "gate_attempts": [
+   {
+    "wc": "WC-CUT",
+    "state": "RUNNING",
+    "allowed": true,
+    "reason": ""
+   },
+   {
+    "wc": "WC-WELD",
+    "state": "UNPLANNED_DOWN",
+    "allowed": false,
+    "reason": "WC-WELD is UNPLANNED_DOWN"
+   },
+   {
+    "wc": "WC-PAINT",
+    "state": "PLANNED_STOP",
+    "allowed": false,
+    "reason": "WC-PAINT is PLANNED_STOP"
+   },
+   {
+    "wc": "WC-GRIND",
+    "state": "UNKNOWN",
+    "allowed": true,
+    "reason": "WC-GRIND state unknown -- allowed, but recorded"
+   }
+  ],
+  "blocked": 2,
+  "maintenance_wos_created": 2,
+  "alarms_deduped": 1,
+  "maintenance_wos": [
+   {
+    "mwo_id": 1,
+    "asset": "WC-WELD",
+    "source": "ML-1",
+    "predicted_rul": 18.0,
+    "confidence": 0.82,
+    "priority": "URGENT",
+    "created_ts": "2026-08-01T00:00:00+00:00"
+   },
+   {
+    "mwo_id": 2,
+    "asset": "WC-MACH",
+    "source": "ML-1",
+    "predicted_rul": 61.0,
+    "confidence": 0.55,
+    "priority": "PLANNED",
+    "created_ts": "2026-08-01T00:00:00+00:00"
+   }
+  ],
+  "unknown_state_policy": "fail OPEN and record -- failing closed on a missing integration halts a plant because a message bus hiccupped"
+ },
+ "signature": {
+  "signed": 6,
+  "chain_before_tamper": {
+   "intact": true,
+   "n_rows": 6
+  },
+  "chain_after_tamper": {
+   "intact": false,
+   "broken_at": 3,
+   "why": "signature does not verify against the payload"
+  },
+  "tamper_detected": true,
+  "tamper_row": 3,
+  "checks": [
+   {
+    "attempt": "sign with a free-text meaning",
+    "refused": true
+   },
+   {
+    "attempt": "alter the payload under a valid signature",
+    "refused": true
+   },
+   {
+    "attempt": "verify with the wrong key",
+    "refused": true
+   },
+   {
+    "attempt": "edit one row in place after the fact",
+    "refused": true
+   }
+  ],
+  "retention": [
+   {
+    "record_type": "op_record",
+    "years": 10,
+    "basis": "AS9100 / customer contract: life of the part plus 7 years",
+    "purge_before_year": 2016
+   },
+   {
+    "record_type": "consumption",
+    "years": 10,
+    "basis": "AS9100 traceability: must outlive any recall window",
+    "purge_before_year": 2016
+   },
+   {
+    "record_type": "ncr",
+    "years": 10,
+    "basis": "AS9100 nonconformance records",
+    "purge_before_year": 2016
+   },
+   {
+    "record_type": "esign",
+    "years": 10,
+    "basis": "21 CFR 11 s11.10(c): signatures live as long as the record",
+    "purge_before_year": 2016
+   },
+   {
+    "record_type": "audit",
+    "years": 10,
+    "basis": "audit trail retained at least as long as what it audits",
+    "purge_before_year": 2016
+   }
+  ],
+  "meanings": {
+   "AUTHORED": "I performed this work",
+   "REVIEWED": "I have examined this record",
+   "APPROVED": "I authorise this",
+   "REJECTED": "I refuse this",
+   "WITNESSED": "I observed this being performed"
+  },
+  "summary": "6 records signed with a stated meaning, chain intact before tampering (True), broken and detected after (True)"
+ },
+ "scale": {
+  "edges": 200000,
+  "insert_seconds": 4.917398100020364,
+  "insert_rows_per_second": 40671.91549920918,
+  "db_mb": 15.470592,
+  "recall_ms_no_index": 51.60879995673895,
+  "recall_ms_with_index": 0.05530007183551788,
+  "recall_ms_covering_index": 0.027799978852272034,
+  "speedup_index": 933.2501431506619,
+  "speedup_covering": 1.9892127303182578,
+  "index_build_seconds": 0.6182579000014812,
+  "covering_build_seconds": 1.029352700104937,
+  "query_plan": [
+   [
+    3,
+    0,
+    55,
+    "SEARCH consumption USING COVERING INDEX ix_cons_lot_unit (lot_id=?)"
+   ]
+  ]
+ },
+ "terminal": {
+  "path": "C:\\Users\\riyas\\Desktop\\manufacturing-hm\\se2-mes-lite\\out\\terminal.html",
+  "bytes": 7080,
+  "self_contained": true,
+  "writes": false
+ },
+ "wall_seconds": 9.552925699972548
+}

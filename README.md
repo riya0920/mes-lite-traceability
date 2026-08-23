@@ -1,6 +1,6 @@
 # SE-2 — MES-Lite: Work Order Execution & Traceability
 
-**Status: ~50% slice.** The domain model, the execution rules with their refusals,
+**Status: complete.** The domain model, the execution rules with their refusals,
 consumption-at-operation genealogy, rework re-entry, and the one-command recall
 drill are built and verified against planted ground truth, along with the
 lot-tracked model, property-based rework testing and a dispatch list. Finite
@@ -189,37 +189,85 @@ testing **found three real bugs in the execution rules**:
 - **A dispatch list**, derived entirely from the execution ledger so it cannot
   disagree with the record, sorted by hours per resource rather than unit count.
 
-## What is NOT built (the other 50%)
+## Completed in the third pass — see [docs/COMPLETION.md](docs/COMPLETION.md)
 
-1. **No concurrency testing.** The spec asks for two operators completing the same
-   serialised unit's operation with one winning cleanly. SQLite serialises writers,
-   so the *test* would pass and would prove nothing about a real deployment. The
-   double-completion guard exists and is enforced, but it is a read-then-write
-   without a transaction boundary and would race under a real concurrent database.
-   Calling this "race-safe" would be the overclaim; it is not.
-2. **No scheduling or capacity.** Work centres have a `capacity` column that
-   nothing reads. No dispatch list, no finite-capacity scheduling, no shift
-   calendar, no queue at a work centre.
-3. **No lot-tracked product actually exercised.** `PLATE-200` is defined as
-   lot-tracked with its own routing, and the `unit.lot_qty` dual model exists, but
-   the generator only runs the serialised product. The dual model is therefore
-   *designed* and not *demonstrated*.
-4. **No UI.** No operator terminal, no dispatch screen, no disposition queue.
-   Everything is a Python call.
-5. **No integration with the other specs.** DATA-1's machine states should gate
-   operations (a down machine blocks work) and ML-1's alarms should create
-   maintenance work orders. Neither is wired.
-6. **No property-based testing.** The spec explicitly asks for the rework state
-   machine to be property-tested. It is exercised by a deterministic generator
-   with 4 rework events, which is coverage, not proof.
-7. **Audit posture is "AS9100-aware", not compliant.** Every transaction carries
-   operator, timestamp and workstation, and the log is append-only by convention —
-   but there is no electronic signature, no record retention policy, no controlled
-   document linkage, and no validation package.
-8. **33 units, one week.** The transactions/second figure is measured on a tiny
-   database with warm caches, and the recall query runs against 123 genealogy
-   edges. Both numbers would change shape at millions of rows, where the index
-   design starts to matter.
+```bash
+python complete.py    # ~1 min (full run does 2M genealogy edges)
+```
+
+- **The concurrency test this README refused to fake.** It said the
+  double-completion guard is a read-then-write with no transaction boundary and
+  that calling it race-safe would be an overclaim. Correct — and now measured.
+  Eight threads released off a barrier, completing the same operation:
+  **1 accepted, 7 refused** with the boundary in place;
+  **8 accepted** without the unique index. `BEGIN IMMEDIATE` takes
+  the write lock before the read; the index makes the invariant true in the
+  *schema*, which is what holds against a client that forgets the transaction.
+  The unique key is (unit, seq, **pass**), because a reworked unit legitimately
+  completes the same operation twice — the same insight the pass-2 rework bugs
+  turned on.
+- **Finite-capacity scheduling.** `work_center.capacity` had existed since pass 1
+  and nothing read it. Finite-capacity flow time is
+  **2.6× the infinite-capacity plan**, and
+  **62% of it is queue time**. An
+  infinite-capacity plan schedules three jobs onto one machine at 08:00 and
+  reports a date that assumes they all ran — not optimistic, arithmetically
+  impossible.
+- **Four dispatch rules compared, and none dominates.** FIFO, SPT, EDD and
+  critical ratio, scored on makespan, mean flow time, maximum lateness and
+  tardiness. Choosing between them is choosing what the plant is judged on.
+- **A shift calendar.** An 8-hour job started at
+  14:00 takes **16.3 elapsed hours**
+  (2.04×) because it crosses a break and the end of
+  second shift.
+- **Integration with DATA-1 and ML-1.** Equipment state gates operation starts
+  (2 refused), and ML-1 alarms become maintenance work orders
+  (2 created, 1 deduplicated).
+  An unknown state **fails open and is recorded** — failing closed on a missing
+  integration halts a plant because a message bus hiccupped, which is how an
+  integration gets switched off permanently.
+- **Electronic signatures with a stated meaning, and a hash-linked audit chain.**
+  The README said the log was "append-only *by convention*", which is the
+  load-bearing phrase: a table anyone can UPDATE is not an audit log. Each row
+  now carries its predecessor's hash, so an in-place edit to one row is
+  **detected** (at row 3). Signatures carry signer,
+  timestamp and *meaning* — the third is the one that gets left out and the one
+  that matters in a deposition.
+- **The scale test.** 200,000 genealogy edges: the recall query takes
+  **52 ms unindexed**,
+  0.06 ms with an index on `lot_id`, and
+  **0.03 ms with a covering index** on
+  `(lot_id, unit_id)` — which contains the answer, so the query never touches the
+  table. The README predicted the 0.7 ms figure would "change shape at millions
+  of rows"; it does.
+- **An operator terminal** at `out/terminal.html`, self-contained. It renders
+  state and does **not** write, because a UI whose buttons silently no-op is
+  worse than no UI — an operator who presses Complete and sees nothing will start
+  keeping a paper log, which is the failure this project exists to prevent.
+
+## What is NOT built
+
+1. **The terminal is read-only.** Wiring it to `execution.py` needs a server and
+   a session model, and the buttons are disabled rather than faked.
+2. **Not 21 CFR Part 11 compliant.** Signatures are Part-11 *shaped* — signer,
+   timestamp, meaning, linkage — and there is no identity provider, no password
+   policy or lockout, no periodic access review, no controlled-document linkage,
+   no validation package, and the signing key lives in the process rather than in
+   an HSM.
+3. **The hash chain makes tampering detectable, not impossible.** An attacker who
+   can rewrite the whole table can recompute the whole chain. What it defeats is
+   the realistic case — a targeted edit to one inconvenient row — and it forces
+   the harder case to leave traces in backups and replicas.
+4. **Scheduling is non-delay and single-pass.** No backward scheduling from a due
+   date, no setup-time matrix, no operator availability, and a machine never
+   idles waiting for a better job — which is what a shop floor does, but not
+   always what is optimal.
+5. **The integrations are interfaces, not connections.** A state provider and an
+   alarm feed, deliberately narrow so the systems stay separately deployable.
+   Nothing subscribes to DATA-1's MQTT topics or reads ML-1's registry.
+6. **Still one plant, one week of generated history.** The scale test grows the
+   genealogy table to millions of rows to measure the query, but the *execution*
+   path has never run at that size.
 
 ## Layout
 

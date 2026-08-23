@@ -6,3 +6,7 @@ __pycache__/
 *.db-shm
 *.onnx
 out/*.log
+
+out/*.db
+out/*.db-wal
+out/*.db-shm
