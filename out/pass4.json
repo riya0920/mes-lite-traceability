@@ -1,0 +1,518 @@
+{
+  "planning": {
+    "tightness": 1.5,
+    "n_jobs": 12,
+    "capacity": {
+      "WC-CUT": 2,
+      "WC-WELD": 2,
+      "WC-MACH": 3,
+      "WC-PAINT": 1,
+      "WC-INSP": 2
+    },
+    "coverage": {
+      "CNC-1": 2,
+      "INSP-1": 2,
+      "WELD-2": 2
+    },
+    "cases": {
+      "baseline": {
+        "FIFO": {
+          "makespan": 667.5,
+          "mean_flow_time": 363.78472222222223,
+          "n_late": 3,
+          "total_tardiness": 235.2083333333333,
+          "setup_minutes": 0.0,
+          "operator_wait_minutes": 0.0,
+          "setup_share_of_work": 0.0
+        },
+        "SPT": {
+          "makespan": 675.0,
+          "mean_flow_time": 332.01388888888886,
+          "n_late": 0,
+          "total_tardiness": 0.0,
+          "setup_minutes": 0.0,
+          "operator_wait_minutes": 0.0,
+          "setup_share_of_work": 0.0
+        },
+        "EDD": {
+          "makespan": 675.0,
+          "mean_flow_time": 332.01388888888886,
+          "n_late": 0,
+          "total_tardiness": 0.0,
+          "setup_minutes": 0.0,
+          "operator_wait_minutes": 0.0,
+          "setup_share_of_work": 0.0
+        },
+        "CR": {
+          "makespan": 595.4166666666666,
+          "mean_flow_time": 378.26388888888886,
+          "n_late": 6,
+          "total_tardiness": 157.49999999999986,
+          "setup_minutes": 0.0,
+          "operator_wait_minutes": 0.0,
+          "setup_share_of_work": 0.0
+        }
+      },
+      "setups": {
+        "FIFO": {
+          "makespan": 692.5,
+          "mean_flow_time": 412.7430555555555,
+          "n_late": 3,
+          "total_tardiness": 410.2083333333333,
+          "setup_minutes": 262.9166666666667,
+          "operator_wait_minutes": 0.0,
+          "setup_share_of_work": 0.0849374074572621
+        },
+        "SPT": {
+          "makespan": 709.1666666666666,
+          "mean_flow_time": 374.375,
+          "n_late": 0,
+          "total_tardiness": 0.0,
+          "setup_minutes": 208.33333333333331,
+          "operator_wait_minutes": 0.0,
+          "setup_share_of_work": 0.06851192107426692
+        },
+        "EDD": {
+          "makespan": 709.1666666666666,
+          "mean_flow_time": 374.375,
+          "n_late": 0,
+          "total_tardiness": 0.0,
+          "setup_minutes": 208.33333333333331,
+          "operator_wait_minutes": 0.0,
+          "setup_share_of_work": 0.06851192107426692
+        },
+        "CR": {
+          "makespan": 675.4166666666666,
+          "mean_flow_time": 426.7361111111111,
+          "n_late": 7,
+          "total_tardiness": 266.8749999999999,
+          "setup_minutes": 231.66666666666669,
+          "operator_wait_minutes": 0.0,
+          "setup_share_of_work": 0.07560511286374763
+        }
+      },
+      "operators": {
+        "FIFO": {
+          "makespan": 849.5833333333333,
+          "mean_flow_time": 487.5694444444444,
+          "n_late": 9,
+          "total_tardiness": 1015.208333333333,
+          "setup_minutes": 0.0,
+          "operator_wait_minutes": 1023.333333333333,
+          "setup_share_of_work": 0.0
+        },
+        "SPT": {
+          "makespan": 816.25,
+          "mean_flow_time": 393.4722222222222,
+          "n_late": 3,
+          "total_tardiness": 159.58333333333326,
+          "setup_minutes": 0.0,
+          "operator_wait_minutes": 611.6666666666666,
+          "setup_share_of_work": 0.0
+        },
+        "EDD": {
+          "makespan": 805.0,
+          "mean_flow_time": 376.0416666666667,
+          "n_late": 2,
+          "total_tardiness": 133.75,
+          "setup_minutes": 0.0,
+          "operator_wait_minutes": 414.16666666666674,
+          "setup_share_of_work": 0.0
+        },
+        "CR": {
+          "makespan": 817.0833333333333,
+          "mean_flow_time": 488.5763888888889,
+          "n_late": 9,
+          "total_tardiness": 1082.9166666666665,
+          "setup_minutes": 0.0,
+          "operator_wait_minutes": 1095.0,
+          "setup_share_of_work": 0.0
+        }
+      },
+      "both": {
+        "FIFO": {
+          "makespan": 871.25,
+          "mean_flow_time": 509.5833333333333,
+          "n_late": 9,
+          "total_tardiness": 1157.2916666666667,
+          "setup_minutes": 223.33333333333334,
+          "operator_wait_minutes": 1006.666666666667,
+          "setup_share_of_work": 0.0730842650668121
+        },
+        "SPT": {
+          "makespan": 906.6666666666666,
+          "mean_flow_time": 451.4583333333333,
+          "n_late": 5,
+          "total_tardiness": 407.7083333333333,
+          "setup_minutes": 208.33333333333331,
+          "operator_wait_minutes": 809.5833333333334,
+          "setup_share_of_work": 0.06851192107426692
+        },
+        "EDD": {
+          "makespan": 854.1666666666666,
+          "mean_flow_time": 437.0138888888889,
+          "n_late": 6,
+          "total_tardiness": 238.33333333333337,
+          "setup_minutes": 208.33333333333331,
+          "operator_wait_minutes": 649.5833333333335,
+          "setup_share_of_work": 0.06851192107426692
+        },
+        "CR": {
+          "makespan": 901.25,
+          "mean_flow_time": 542.9861111111111,
+          "n_late": 10,
+          "total_tardiness": 1569.1666666666663,
+          "setup_minutes": 231.66666666666669,
+          "operator_wait_minutes": 1238.3333333333333,
+          "setup_share_of_work": 0.07560511286374763
+        }
+      }
+    },
+    "attend": {
+      "all": 854.1666666666666,
+      "setup": 709.1666666666666
+    },
+    "reconcile": {
+      "mean_inflation": 1.4799413343031969,
+      "per_job": [
+        {
+          "job_id": "WO-01",
+          "backward_lead_time": 364.5833333333333,
+          "forward_lead_time": 474.1666666666667,
+          "queue_minutes": 109.58333333333337,
+          "inflation": 1.3005714285714287
+        },
+        {
+          "job_id": "WO-02",
+          "backward_lead_time": 422.5,
+          "forward_lead_time": 610.0,
+          "queue_minutes": 187.5,
+          "inflation": 1.4437869822485208
+        },
+        {
+          "job_id": "WO-03",
+          "backward_lead_time": 108.75,
+          "forward_lead_time": 169.16666666666669,
+          "queue_minutes": 60.416666666666686,
+          "inflation": 1.5555555555555558
+        },
+        {
+          "job_id": "WO-04",
+          "backward_lead_time": 306.66666666666663,
+          "forward_lead_time": 364.1666666666667,
+          "queue_minutes": 57.50000000000006,
+          "inflation": 1.1875000000000002
+        },
+        {
+          "job_id": "WO-05",
+          "backward_lead_time": 364.5833333333333,
+          "forward_lead_time": 550.0,
+          "queue_minutes": 185.41666666666669,
+          "inflation": 1.5085714285714287
+        },
+        {
+          "job_id": "WO-06",
+          "backward_lead_time": 95.83333333333334,
+          "forward_lead_time": 142.91666666666669,
+          "queue_minutes": 47.08333333333334,
+          "inflation": 1.491304347826087
+        },
+        {
+          "job_id": "WO-07",
+          "backward_lead_time": 480.41666666666663,
+          "forward_lead_time": 764.1666666666667,
+          "queue_minutes": 283.7500000000001,
+          "inflation": 1.5906331309627062
+        },
+        {
+          "job_id": "WO-08",
+          "backward_lead_time": 306.66666666666663,
+          "forward_lead_time": 404.1666666666667,
+          "queue_minutes": 97.50000000000006,
+          "inflation": 1.3179347826086958
+        },
+        {
+          "job_id": "WO-09",
+          "backward_lead_time": 82.91666666666667,
+          "forward_lead_time": 120.41666666666667,
+          "queue_minutes": 37.5,
+          "inflation": 1.4522613065326633
+        },
+        {
+          "job_id": "WO-10",
+          "backward_lead_time": 422.5,
+          "forward_lead_time": 685.0,
+          "queue_minutes": 262.5,
+          "inflation": 1.621301775147929
+        },
+        {
+          "job_id": "WO-11",
+          "backward_lead_time": 480.41666666666663,
+          "forward_lead_time": 854.1666666666666,
+          "queue_minutes": 373.75,
+          "inflation": 1.7779705117085864
+        },
+        {
+          "job_id": "WO-12",
+          "backward_lead_time": 70.0,
+          "forward_lead_time": 105.83333333333333,
+          "queue_minutes": 35.83333333333333,
+          "inflation": 1.5119047619047619
+        }
+      ]
+    },
+    "infeasible_promise": {
+      "job_id": "RUSH-01",
+      "sku": "BRKT-100",
+      "due": 30.0,
+      "latest_release": -508.3333333333333,
+      "released": 0.0,
+      "slack_minutes": -508.3333333333333,
+      "feasible": false,
+      "critical_path_minutes": 538.3333333333333
+    },
+    "calendar": {
+      "with_minutes": 1254.1666666666667,
+      "without_minutes": 854.1666666666666,
+      "inflation": 1.4682926829268295
+    }
+  },
+  "terminal": {
+    "log": [
+      {
+        "step": "write with no session",
+        "status": 401,
+        "kind": null,
+        "message": "no session; scan a badge first",
+        "ok": false
+      },
+      {
+        "step": "login as an unknown operator",
+        "status": 404,
+        "kind": null,
+        "message": "unknown operator 'NOBODY'",
+        "ok": false
+      },
+      {
+        "step": "can_start, uncertified (the greyed-out button)",
+        "status": 200,
+        "kind": "CertificationError",
+        "message": "operator OP-05 lacks certification 'WELD-2' required at BRKT-100 op 20; record an authorised deviation reference to override",
+        "ok": false
+      },
+      {
+        "step": "start, uncertified",
+        "status": 409,
+        "kind": "CertificationError",
+        "message": "operator OP-05 lacks certification 'WELD-2' required at BRKT-100 op 20; record an authorised deviation reference to override",
+        "ok": false
+      },
+      {
+        "step": "start, uncertified, with an authorised deviation",
+        "status": 200,
+        "kind": null,
+        "message": null,
+        "ok": true
+      },
+      {
+        "step": "complete",
+        "status": 200,
+        "kind": null,
+        "message": null,
+        "ok": true
+      },
+      {
+        "step": "complete again (the double-click)",
+        "status": 409,
+        "kind": "ConservationError",
+        "message": "unit WO-9999-U001 op 20 is already complete for this pass; a second completion without an intervening rework entry would double-count",
+        "ok": false
+      },
+      {
+        "step": "a request missing fields",
+        "status": 400,
+        "kind": null,
+        "message": "missing seq, wc_id",
+        "ok": false
+      }
+    ],
+    "unit": "WO-9999-U001",
+    "seq": 20,
+    "completions_recorded": 1,
+    "audit_rows": 440,
+    "limits": [
+      "No authentication. `login` takes an operator id and trusts it; there is no password, no identity provider, no lockout and no session expiry. It is a badge scan without the badge.",
+      "No transport security. Plain HTTP on the loopback interface.",
+      "One process, one SQLite connection, one lock. It serialises every write, which is correct and does not scale; the concurrency work in `scheduling.race_two_operators` is about the database boundary, and this server sits above it rather than exercising it.",
+      "No CSRF protection and no origin checking, which matters the moment this is served anywhere a browser can reach it from another page.",
+      "The page it serves is the rendered terminal with live buttons; it is not a front end anybody designed, and it re-fetches rather than updating in place."
+    ],
+    "n_dispatch": 13
+  },
+  "connections": {
+    "historian_path": "C:\\Users\\riyas\\Desktop\\manufacturing-hm\\data1-oee-platform\\out\\historian.db",
+    "ml1_path": "C:\\Users\\riyas\\Desktop\\manufacturing-hm\\ml1-rul-platform\\out\\completion.json",
+    "historian_available": true,
+    "ml1_available": true,
+    "n_machines": 6,
+    "newest_reading": "2026-08-19T15:08:12.145096+00:00",
+    "age_of_newest_minutes": 7631.216157133333,
+    "gates_as_of_today": [
+      {
+        "allowed": true,
+        "state": "STALE",
+        "severity": "warn",
+        "age_s": 458154.194146,
+        "reason": "WC-CUT: newest equipment state is 7636 min old -- allowed, and recorded as unverified",
+        "wc": "WC-CUT"
+      },
+      {
+        "allowed": true,
+        "state": "STALE",
+        "severity": "warn",
+        "age_s": 458154.172998,
+        "reason": "WC-WELD: newest equipment state is 7636 min old -- allowed, and recorded as unverified",
+        "wc": "WC-WELD"
+      },
+      {
+        "allowed": true,
+        "state": "STALE",
+        "severity": "warn",
+        "age_s": 458154.175833,
+        "reason": "WC-MACH: newest equipment state is 7636 min old -- allowed, and recorded as unverified",
+        "wc": "WC-MACH"
+      },
+      {
+        "allowed": true,
+        "state": "STALE",
+        "severity": "warn",
+        "age_s": 458154.195696,
+        "reason": "WC-PAINT: newest equipment state is 7636 min old -- allowed, and recorded as unverified",
+        "wc": "WC-PAINT"
+      },
+      {
+        "allowed": true,
+        "state": "UNKNOWN",
+        "severity": "info",
+        "reason": "WC-GRIND: no equipment state -- allowed, and recorded",
+        "wc": "WC-GRIND"
+      }
+    ],
+    "gates_as_of_the_data": [
+      {
+        "allowed": false,
+        "state": "PLANNED_STOP",
+        "severity": "block",
+        "reason": "WC-CUT is PLANNED_STOP",
+        "wc": "WC-CUT"
+      },
+      {
+        "allowed": false,
+        "state": "PLANNED_STOP",
+        "severity": "block",
+        "reason": "WC-WELD is PLANNED_STOP",
+        "wc": "WC-WELD"
+      },
+      {
+        "allowed": false,
+        "state": "PLANNED_STOP",
+        "severity": "block",
+        "reason": "WC-MACH is PLANNED_STOP",
+        "wc": "WC-MACH"
+      },
+      {
+        "allowed": false,
+        "state": "PLANNED_STOP",
+        "severity": "block",
+        "reason": "WC-PAINT is PLANNED_STOP",
+        "wc": "WC-PAINT"
+      },
+      {
+        "allowed": true,
+        "state": "UNKNOWN",
+        "severity": "info",
+        "reason": "WC-GRIND: no equipment state -- allowed, and recorded",
+        "wc": "WC-GRIND"
+      }
+    ],
+    "model": {
+      "name": "rul-gbm",
+      "version": 4,
+      "stage": "Production",
+      "kind": "gbm",
+      "fingerprint": "743de0d7870f975a"
+    },
+    "intervals": {
+      "n_units": 20,
+      "n_units_total": 20,
+      "n_missed": 0,
+      "median": {
+        "point": 24.0,
+        "lo": 21.0,
+        "hi": 27.0,
+        "n": 20,
+        "n_boot": 4000,
+        "width": 6.0
+      },
+      "p05": {
+        "point": 16.9,
+        "lo": 15.0,
+        "hi": 20.95,
+        "n": 20,
+        "n_boot": 4000,
+        "width": 5.949999999999999
+      },
+      "mean": {
+        "point": 24.95,
+        "lo": 22.45,
+        "hi": 27.85,
+        "n": 20,
+        "n_boot": 4000,
+        "width": 5.400000000000002
+      }
+    },
+    "alarms": [
+      {
+        "asset": "WC-WELD",
+        "predicted_rul": 24.0,
+        "rul_p05": 16.9,
+        "interval_width": 6.0,
+        "priority": "URGENT",
+        "model_name": "rul-gbm",
+        "model_version": 4,
+        "model_fingerprint": "743de0d7870f975a",
+        "source": "ML-1"
+      },
+      {
+        "asset": "WC-MACH",
+        "predicted_rul": 24.0,
+        "rul_p05": 16.9,
+        "interval_width": 6.0,
+        "priority": "URGENT",
+        "model_name": "rul-gbm",
+        "model_version": 4,
+        "model_fingerprint": "743de0d7870f975a",
+        "source": "ML-1"
+      }
+    ],
+    "alarm_basis": "fleet interval, not per-asset",
+    "priority_from_median": "PLANNED",
+    "priority_from_p05": "URGENT",
+    "absent_feeds": {
+      "historian": {
+        "available": false,
+        "why": "no historian at C:\\Users\\riyas\\Desktop\\manufacturing-hm\\se2-mes-lite\\out\\no-such.db",
+        "path": "C:\\Users\\riyas\\Desktop\\manufacturing-hm\\se2-mes-lite\\out\\no-such.db",
+        "work_centres": {},
+        "unmapped_machines": []
+      },
+      "ml1": {
+        "available": false,
+        "why": "no ML-1 output at C:\\Users\\riyas\\Desktop\\manufacturing-hm\\se2-mes-lite\\out\\no-such.json",
+        "path": "C:\\Users\\riyas\\Desktop\\manufacturing-hm\\se2-mes-lite\\out\\no-such.json",
+        "model": null
+      }
+    }
+  },
+  "elapsed_s": 1.5405538082122803
+}

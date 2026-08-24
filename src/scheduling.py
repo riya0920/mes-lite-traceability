@@ -80,6 +80,11 @@ from dataclasses import dataclass, field
 # shift calendar
 # ---------------------------------------------------------------------------
 
+# Tolerance for minute arithmetic. Absolute times run to tens of thousands of
+# minutes, so a difference of two of them carries ~1e-12 of noise.
+_EPS = 1e-9
+
+
 @dataclass
 class ShiftCalendar:
     """Working minutes per day. Times are minutes from midnight.
@@ -138,7 +143,15 @@ class ShiftCalendar:
                 lo, hi = day * 1440 + a, day * 1440 + b
                 if lo <= t < hi:
                     avail = hi - t
-                    if remaining <= avail:
+                    # EPS, not an exact comparison. `avail` is computed by
+                    # subtracting two absolute minute counts in the tens of
+                    # thousands, so work that exactly fills a window comes out
+                    # a picosecond too long -- and the fall-through does not
+                    # lose a picosecond, it advances to the NEXT window and
+                    # places the residue there, moving the answer by the whole
+                    # gap between shifts. A silent off-by-one-shift that only
+                    # fires when the numbers line up exactly.
+                    if remaining <= avail + _EPS:
                         return t + remaining
                     remaining -= avail
                     t = hi
@@ -147,6 +160,61 @@ class ShiftCalendar:
             if not placed:
                 t = self.next_working_minute(t + 1)
         raise RuntimeError("could not place the work inside 2000 windows")
+
+    def prev_working_minute(self, t: float) -> float:
+        """The last working minute at or before `t`.
+
+        Note the asymmetry with `next_working_minute`: a window is [lo, hi), so
+        the instant `hi` is NOT a working minute going forward but IS the correct
+        answer going backward -- it is the boundary where work that ends there
+        finished. Treating the two directions symmetrically puts every backward
+        schedule one shift early, and it does so silently.
+        """
+        day = int(t // 1440)
+        for d in range(day, day - 21, -1):
+            for a, b in sorted(self._windows(d), reverse=True):
+                lo, hi = d * 1440 + a, d * 1440 + b
+                if t > hi:
+                    return float(hi)
+                if lo < t <= hi:
+                    return float(t)
+        return float(t)                                       # pragma: no cover
+
+    def subtract_working_minutes(self, end: float, minutes: float) -> float:
+        """Walk `minutes` of WORK backwards from `end`, skipping closed time.
+
+        The exact inverse of `add_working_minutes`, and tested as one: for any
+        start inside a working window, subtract(add(start, m), m) == start.
+        """
+        t = self.prev_working_minute(end)
+        remaining = float(minutes)
+        for _ in range(2000):
+            day = int(t // 1440)
+            placed = False
+            for a, b in sorted(self._windows(day), reverse=True):
+                lo, hi = day * 1440 + a, day * 1440 + b
+                if lo < t <= hi:
+                    avail = t - lo
+                    if remaining <= avail + _EPS:
+                        return t - remaining
+                    remaining -= avail
+                    t = lo
+                    placed = True
+                    break
+            if not placed:
+                t = self.prev_working_minute(t - 1)
+        raise RuntimeError("could not place the work inside 2000 windows")
+
+    def working_minutes_between(self, a: float, b: float) -> float:
+        """How much of [a, b) is working time. Used to price a wait."""
+        if b <= a:
+            return 0.0
+        total = 0.0
+        for d in range(int(a // 1440), int(b // 1440) + 1):
+            for s0, e0 in self._windows(d):
+                lo, hi = d * 1440 + s0, d * 1440 + e0
+                total += max(0.0, min(b, hi) - max(a, lo))
+        return total
 
     def elapsed_vs_working(self, start: float, minutes: float) -> dict:
         end = self.add_working_minutes(start, minutes)

@@ -245,27 +245,107 @@ python complete.py    # ~1 min (full run does 2M genealogy edges)
   worse than no UI — an operator who presses Complete and sees nothing will start
   keeping a paper log, which is the failure this project exists to prevent.
 
+## Built in the fourth pass — see [docs/PLANNING_AND_CONNECTIONS.md](docs/PLANNING_AND_CONNECTIONS.md)
+
+```bash
+python run_pass4.py    # ~3 s
+```
+
+The last three items on the list below.
+
+- **The planner uses the routing that is in the database.** `scheduling.py` took
+  synthetic `(seq, work_centre, minutes)` triples while the schema beside it
+  already had `std_setup_s`, `cert_required`, `work_center.capacity` and a
+  `certification` table. `planning.schedule_finite` reads all of it — and with
+  the constraints switched off it reproduces the old scheduler operation for
+  operation on all four dispatch rules, which is what makes the difference
+  attributable to the constraints rather than to a rewrite.
+- **Operators cost 4× what setups cost**
+  (+130 minutes against +34 on EDD), and no capacity number
+  says so: CNC-1 has 2 holders, INSP-1 has 2 holders, WELD-2 has 2 holders,
+  against five operators, one of whom holds nothing. A cell with three machines
+  and two certified people has a capacity of two.
+- **The naive plan promises zero late jobs.** SPT and EDD deliver
+  everything on time without operators and miss
+  5 and 6 of 12 with
+  them. A planner whose constraints are optional produces a promise nobody can
+  keep, in the most convincing possible form.
+- **Backward scheduling**, which is the direction that says you are already
+  late: a rush order promised in 30 minutes
+  needs 538, so its latest
+  release is **-508 minutes** —
+  infeasible with every machine free, before anybody looks at a queue. Across
+  the order book the finite forward pass takes
+  **1.48×** the infinite-capacity promise,
+  and that gap is queue.
+- **The terminal writes.** A session model, and every write routed through
+  `execution.py` — an uncertified operator gets a 409 carrying the reason and
+  the override path, a deviation reference gets through, and a double-click
+  leaves **1 completion** in `op_record`. That the
+  server holds no rules of its own is tested by relaxing the check in
+  `execution.py` and watching the same HTTP request start succeeding.
+- **The integrations are connections.** Not by importing another project —
+  by reading the artefact each one publishes. SE-2 opens DATA-1's
+  `historian.db` read-only and derives machine state from the `State` tag, and
+  reads ML-1's registry index to act only on a Production model
+  (`rul-gbm` v4).
+
+### And the connection found something on its first run
+
+DATA-1's newest reading is **5.3 days old**, so every work centre gates
+as `STALE` — a third outcome the interface version could not have, because a
+hard-coded dict of machine states is never stale, never missing and never wrong.
+A gate that cannot tell *the weld cell is running* from *the weld cell was
+running on Friday* is worse than no gate: it is a green light with nothing
+behind it. Stale fails **open**, and that is a trade rather than a convenience —
+failing closed stops the plant every time a broker restarts, which is how an
+integration gets switched off permanently.
+
+Priority now comes from the pessimistic end of ML-1's interval: a median RUL of
+24.0 cycles reads `PLANNED`,
+and the same forecast at its 5th percentile (16.9)
+reads `URGENT`. Planning from a median means being wrong half
+the time, and it is the half where the machine fails first.
+
+### A bug found building the backward walk
+
+`add_working_minutes` compared `remaining <= avail`, both minute counts in the
+tens of thousands, so work that exactly fills a shift window compares as *longer*
+than the window by ~1e-12. The fall-through does not lose a picosecond — it
+carries the residue into the **next** window and returns a time a whole shift
+later, or after a weekend. 1052 of 4000 random round-trips failed before the
+tolerance went in, and the forward function had carried the bug since pass 1.
+
 ## What is NOT built
 
-1. **The terminal is read-only.** Wiring it to `execution.py` needs a server and
-   a session model, and the buttons are disabled rather than faked.
-2. **Not 21 CFR Part 11 compliant.** Signatures are Part-11 *shaped* — signer,
+1. **Not 21 CFR Part 11 compliant.** Signatures are Part-11 *shaped* — signer,
    timestamp, meaning, linkage — and there is no identity provider, no password
    policy or lockout, no periodic access review, no controlled-document linkage,
    no validation package, and the signing key lives in the process rather than in
-   an HSM.
-3. **The hash chain makes tampering detectable, not impossible.** An attacker who
+   an HSM. The terminal now writes, and its `login` takes an operator id and
+   trusts it: a badge scan without the badge.
+2. **The hash chain makes tampering detectable, not impossible.** An attacker who
    can rewrite the whole table can recompute the whole chain. What it defeats is
    the realistic case — a targeted edit to one inconvenient row — and it forces
    the harder case to leave traces in backups and replicas.
-4. **Scheduling is non-delay and single-pass.** No backward scheduling from a due
-   date, no setup-time matrix, no operator availability, and a machine never
-   idles waiting for a better job — which is what a shop floor does, but not
-   always what is optimal.
-5. **The integrations are interfaces, not connections.** A state provider and an
-   alarm feed, deliberately narrow so the systems stay separately deployable.
-   Nothing subscribes to DATA-1's MQTT topics or reads ML-1's registry.
-6. **Still one plant, one week of generated history.** The scale test grows the
+3. **The server is a demonstration of the write path, not a deployment.** No
+   authentication, no TLS, no CSRF protection or origin checking, one process
+   and one lock that serialises every write.
+4. **Backward scheduling is infinite-capacity.** It gives a bound — a job that
+   cannot make its date with every machine free will certainly not make it with
+   the machines there are — and a genuine backward pass over a contended shop is
+   a harder problem that would need the forward and backward passes to iterate.
+5. **Sequencing is still non-delay and single-pass.** A machine never idles
+   waiting for a better job, which is what a shop floor does and not always what
+   is optimal, and nothing re-plans when reality diverges from the plan.
+6. **ML-1 publishes a fleet interval, not per-asset RUL.** Every asset in the
+   maintenance feed therefore carries the same prediction. The provenance and
+   dispositioning path is real; per-asset prediction is not, and closing that
+   needs ML-1 to publish per-unit rows.
+7. **The equipment feed is a file, read on demand.** DATA-1's historian is polled
+   rather than subscribed to, so freshness is whatever the last write left
+   behind — which is exactly why the stale path exists and why it is exercised.
+8. **Still one plant, one week of generated history.** The scale test grows the
    genealogy table to millions of rows to measure the query, but the *execution*
    path has never run at that size.
 
@@ -276,5 +356,10 @@ src/model.py       SQLite schema: routings, BOM-at-operation, lots, units, genea
 src/execution.py   the rules and their refusals; quantity-conservation invariant
 src/trace.py       forward/backward genealogy, split-tree walk, recall drill, birth certificate
 src/generate.py    a week of execution with planted violations and a planted recall scenario
+src/scheduling.py  shift calendar (both directions), dispatch rules, transaction boundary
+src/planning.py    routing from the DB, setup matrix, operators, backward scheduling
+src/server.py      the terminal's write path: sessions, and every write via execution.py
+src/integration.py DATA-1's historian and ML-1's registry, read as published files
 run_mes.py         orchestration; writes docs/RESULTS.md
+run_pass4.py       planning, the write path, the connections; writes the pass-4 doc
 ```
