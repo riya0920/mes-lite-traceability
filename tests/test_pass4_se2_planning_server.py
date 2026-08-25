@@ -204,6 +204,9 @@ def test_forward_lead_time_exceeds_the_infinite_capacity_promise(seeded, jobs):
 # the terminal that writes
 # ---------------------------------------------------------------------------
 
+PIN = "8417"
+
+
 @pytest.fixture(scope="module")
 def live(tmp_path_factory):
     db = tmp_path_factory.mktemp("srv") / "s.db"
@@ -213,6 +216,12 @@ def live(tmp_path_factory):
     generate.run_week(conn, np.random.default_rng(0))
     conn.close()
     h = SV.serve(db)
+    # Pass 5 made a PIN mandatory. These tests are about the WRITE path, so they
+    # enrol real credentials and use them rather than switching authentication
+    # off -- a test suite that runs with the security disabled stops testing the
+    # thing that ships.
+    for op in ("OP-01", "OP-05"):
+        h["app"].credentials.enrol(op, PIN)
     yield h
     h["server"].shutdown()
 
@@ -245,12 +254,12 @@ def test_a_write_without_a_session_is_refused(live):
 
 
 def test_unknown_operator_cannot_log_in(live):
-    c, _ = _call(live["url"], "/api/login", {"op_id": "NOPE"})
+    c, _ = _call(live["url"], "/api/login", {"op_id": "NOPE", "pin": PIN})
     assert c == 404
 
 
 def test_uncertified_operator_is_refused_with_the_reason(live, weld_job):
-    tok = _call(live["url"], "/api/login", {"op_id": "OP-05"})[1]["token"]
+    tok = _call(live["url"], "/api/login", {"op_id": "OP-05", "pin": PIN})[1]["token"]
     unit, seq = weld_job
     c, b = _call(live["url"], "/api/start",
                  {"unit_id": unit, "seq": seq, "wc_id": "WC-WELD"}, tok)
@@ -264,14 +273,14 @@ def test_can_start_agrees_with_start(live, weld_job):
     and a refusal are guaranteed to say the same thing."""
     unit, seq = weld_job
     for op_id, expect in (("OP-05", False), ("OP-01", True)):
-        tok = _call(live["url"], "/api/login", {"op_id": op_id})[1]["token"]
+        tok = _call(live["url"], "/api/login", {"op_id": op_id, "pin": PIN})[1]["token"]
         _, dry = _call(live["url"],
                        f"/api/can_start?unit_id={unit}&seq={seq}", None, tok)
         assert dry["allowed"] is expect, op_id
 
 
 def test_a_deviation_reference_overrides_the_certification(live, weld_job):
-    tok = _call(live["url"], "/api/login", {"op_id": "OP-05"})[1]["token"]
+    tok = _call(live["url"], "/api/login", {"op_id": "OP-05", "pin": PIN})[1]["token"]
     unit, seq = weld_job
     c, b = _call(live["url"], "/api/start",
                  {"unit_id": unit, "seq": seq, "wc_id": "WC-WELD",
@@ -280,7 +289,7 @@ def test_a_deviation_reference_overrides_the_certification(live, weld_job):
 
 
 def test_the_write_actually_lands_and_a_second_one_is_refused(live, weld_job):
-    tok = _call(live["url"], "/api/login", {"op_id": "OP-01"})[1]["token"]
+    tok = _call(live["url"], "/api/login", {"op_id": "OP-01", "pin": PIN})[1]["token"]
     unit, seq = weld_job
     _call(live["url"], "/api/start",
           {"unit_id": unit, "seq": seq, "wc_id": "WC-WELD"}, tok)
@@ -301,7 +310,7 @@ def test_the_write_actually_lands_and_a_second_one_is_refused(live, weld_job):
 
 
 def test_a_missing_field_is_a_400_and_names_what_is_missing(live):
-    tok = _call(live["url"], "/api/login", {"op_id": "OP-01"})[1]["token"]
+    tok = _call(live["url"], "/api/login", {"op_id": "OP-01", "pin": PIN})[1]["token"]
     c, b = _call(live["url"], "/api/complete", {"unit_id": "x"}, tok)
     assert c == 400 and "seq" in b["error"] and "wc_id" in b["error"]
 
@@ -318,7 +327,7 @@ def test_the_server_enforces_nothing_itself(live, weld_job, monkeypatch):
     THERE relaxes it at the HTTP boundary too -- if the server held a copy, this
     request would still be refused."""
     unit, seq = weld_job
-    tok = _call(live["url"], "/api/login", {"op_id": "OP-05"})[1]["token"]
+    tok = _call(live["url"], "/api/login", {"op_id": "OP-05", "pin": PIN})[1]["token"]
     c, _ = _call(live["url"], "/api/start",
                  {"unit_id": unit, "seq": seq, "wc_id": "WC-WELD"}, tok)
     assert c == 409

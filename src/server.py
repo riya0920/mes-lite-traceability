@@ -35,12 +35,14 @@ from __future__ import annotations
 
 import http.server
 import json
+import time
 import secrets
 import socket
 import sqlite3
 import threading
 import urllib.parse
 
+import auth as AU
 import execution as ex
 import model
 
@@ -60,31 +62,62 @@ class SessionStore:
     and requests without one are refused rather than defaulted.
     """
 
-    def __init__(self, app: "TerminalApp"):
+    def __init__(self, app: "TerminalApp", ttl_s: float = AU.SESSION_SECONDS):
         self._app = app
-        self._by_token: dict[str, str] = {}
+        self._by_token: dict[str, dict] = {}
         self._lock = threading.Lock()
+        self.ttl_s = float(ttl_s)
 
-    def login(self, op_id: str) -> str:
+    def login(self, op_id: str, pin: str | None = None) -> str:
+        """A badge id is an identifier; the PIN is what makes it a credential.
+
+        `require_pin` is a property of the APP, not of the call: a server that
+        accepts an unauthenticated login when a PIN happens to be omitted has no
+        authentication at all.
+        """
         row = self._app.conn.execute(
             "SELECT op_id FROM operator WHERE op_id=?", (op_id,)).fetchone()
         if row is None:
             raise KeyError(f"unknown operator {op_id!r}")
-        token = secrets.token_urlsafe(16)
+
+        if self._app.require_pin:
+            if pin is None:
+                raise PermissionError("a PIN is required")
+            res = self._app.credentials.verify(op_id, pin)
+            if not res["ok"]:
+                if res["reason"] == "locked_out":
+                    raise PermissionError(
+                        f"locked out; retry in {res['retry_after_s']:.0f}s")
+                # "no credential" and "wrong PIN" get the SAME message. Telling
+                # them apart tells an attacker which badge ids are enrolled.
+                raise PermissionError("badge or PIN not recognised")
+
+        token = secrets.token_urlsafe(32)
         with self._lock:
-            self._by_token[token] = op_id
+            self._by_token[token] = {"op": op_id, "at": time.monotonic()}
         return token
 
     def operator(self, token: str | None) -> str:
         with self._lock:
-            op = self._by_token.get(token or "")
-        if op is None:
+            rec = self._by_token.get(token or "")
+            if rec is not None and (time.monotonic() - rec["at"]) > self.ttl_s:
+                # A terminal on a line is never logged out by the person who
+                # logged in. Expiry is the only thing that ends a session.
+                del self._by_token[token]
+                rec = None
+        if rec is None:
             raise PermissionError("no session; scan a badge first")
-        return op
+        return rec["op"]
 
     def logout(self, token: str) -> None:
         with self._lock:
             self._by_token.pop(token, None)
+
+    def active(self) -> int:
+        now = time.monotonic()
+        with self._lock:
+            return sum(1 for r in self._by_token.values()
+                       if now - r["at"] <= self.ttl_s)
 
 
 # ---------------------------------------------------------------------------
@@ -94,9 +127,12 @@ class SessionStore:
 class TerminalApp:
     """Routes requests to `execution.py`. Holds no business rules of its own."""
 
-    def __init__(self, db_path, key: bytes = b"demo-key"):
+    def __init__(self, db_path, key: bytes = b"demo-key",
+                 require_pin: bool = True,
+                 session_ttl_s: float = AU.SESSION_SECONDS):
         self.db_path = str(db_path)
         self.key = key
+        self.require_pin = bool(require_pin)
         # SQLite connections are bound to the thread that opened them, and the
         # server hands every request to a new one. A thread-local connection is
         # the fix rather than check_same_thread=False, which would silently
@@ -104,7 +140,9 @@ class TerminalApp:
         # -- the thing this project spent a whole section getting right -- to
         # whichever request happened to call commit() last.
         self._tl = threading.local()
-        self.sessions = SessionStore(self)
+        # the FACTORY, not a connection -- see Credentials.__init__
+        self.credentials = AU.Credentials(lambda: self.conn)
+        self.sessions = SessionStore(self, ttl_s=session_ttl_s)
         self._lock = threading.Lock()
 
     @property
@@ -305,7 +343,7 @@ def _handler(app: TerminalApp, page_html: str):
 
             if path == "/api/login":
                 return self._send(200, {"ok": True, "token": app.sessions.login(
-                    body.get("op_id", ""))})
+                    body.get("op_id", ""), body.get("pin"))})
 
             route = ROUTES.get(path)
             if route is None:
@@ -325,16 +363,32 @@ def _handler(app: TerminalApp, page_html: str):
     return H
 
 
-def serve(db_path, page_html: str = "<h1>MES terminal</h1>", port: int = 0):
-    """Start the terminal. `port=0` takes a free one, which the tests rely on."""
-    app = TerminalApp(db_path)
+def serve(db_path, page_html: str = "<h1>MES terminal</h1>", port: int = 0,
+          tls_dir=None, require_pin: bool = True,
+          session_ttl_s: float = AU.SESSION_SECONDS):
+    """Start the terminal. `port=0` takes a free one, which the tests rely on.
+
+    `tls_dir` turns on TLS with a self-signed certificate generated into that
+    directory. Plain HTTP remains reachable so the pass-4 write-path tests keep
+    exercising the same handler -- what changes with TLS is the transport, and
+    running both proves that.
+    """
+    app = TerminalApp(db_path, require_pin=require_pin,
+                      session_ttl_s=session_ttl_s)
     srv = http.server.ThreadingHTTPServer(("127.0.0.1", port),
                                           _handler(app, page_html))
+    pki = None
+    scheme = "http"
+    if tls_dir is not None:
+        pki = AU.self_signed(tls_dir)
+        srv.socket = AU.server_context(pki).wrap_socket(srv.socket,
+                                                        server_side=True)
+        scheme = "https"
     t = threading.Thread(target=srv.serve_forever, daemon=True)
     t.start()
-    return {"app": app, "server": srv, "thread": t,
-            "port": srv.server_address[1],
-            "url": f"http://127.0.0.1:{srv.server_address[1]}"}
+    return {"app": app, "server": srv, "thread": t, "pki": pki,
+            "port": srv.server_address[1], "scheme": scheme,
+            "url": f"{scheme}://127.0.0.1:{srv.server_address[1]}"}
 
 
 def free_port() -> int:
@@ -347,10 +401,17 @@ def free_port() -> int:
 # WHAT THIS IS NOT
 # ---------------------------------------------------------------------------
 LIMITS = [
-    "No authentication. `login` takes an operator id and trusts it; there is no "
-    "password, no identity provider, no lockout and no session expiry. It is a "
-    "badge scan without the badge.",
-    "No transport security. Plain HTTP on the loopback interface.",
+    "Authentication is a badge id plus a PIN, hashed with PBKDF2-HMAC-SHA256, "
+    "with lockout and session expiry -- and it is NOT Part 11 compliance. Part "
+    "11 wants an identity lifecycle: an authority issuing and revoking "
+    "credentials, periodic access review, a password policy and a validation "
+    "package. This is the mechanism such a programme sits on, and a mechanism "
+    "without a programme is not compliance.",
+    "TLS is server-authenticated with a self-signed certificate generated per "
+    "run. No CA, no revocation, and a client has to be handed the certificate "
+    "out of band. Client certificates are deliberately absent: they would "
+    "authenticate machines, and a terminal needs to authenticate people.",
+    "Lockout state lives in process memory, so bouncing the service clears it.",
     "One process, one SQLite connection, one lock. It serialises every write, "
     "which is correct and does not scale; the concurrency work in "
     "`scheduling.race_two_operators` is about the database boundary, and this "

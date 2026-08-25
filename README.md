@@ -318,36 +318,47 @@ tolerance went in, and the forward function had carried the bug since pass 1.
 
 ## What is NOT built
 
-1. **Not 21 CFR Part 11 compliant.** Signatures are Part-11 *shaped* — signer,
-   timestamp, meaning, linkage — and there is no identity provider, no password
-   policy or lockout, no periodic access review, no controlled-document linkage,
-   no validation package, and the signing key lives in the process rather than in
-   an HSM. The terminal now writes, and its `login` takes an operator id and
-   trusts it: a badge scan without the badge.
-2. **The hash chain makes tampering detectable, not impossible.** An attacker who
-   can rewrite the whole table can recompute the whole chain. What it defeats is
-   the realistic case — a targeted edit to one inconvenient row — and it forces
-   the harder case to leave traces in backups and replicas.
-3. **The server is a demonstration of the write path, not a deployment.** No
-   authentication, no TLS, no CSRF protection or origin checking, one process
-   and one lock that serialises every write.
-4. **Backward scheduling is infinite-capacity.** It gives a bound — a job that
+1. **Not 21 CFR Part 11 compliant, and authentication does not change that.**
+   The terminal now takes a badge and a PIN — PBKDF2-HMAC-SHA256 at 200k
+   iterations, per-operator salt, constant-time comparison, lockout after five
+   failures, session expiry — and serves over TLS. Part 11 wants an *identity
+   lifecycle*: an authority issuing and revoking credentials, periodic access
+   review, a password policy, and a validation package for the software that
+   enforces them. This is the mechanism such a programme sits on; a mechanism
+   without a programme is not compliance.
+2. **The hash chain makes tampering detectable, not impossible.** An attacker
+   who can rewrite the whole table can recompute the whole chain. What it defeats
+   is the realistic case — a targeted edit to one inconvenient row — and it
+   forces the harder case to leave traces in backups and replicas.
+3. **The TLS certificate is self-signed and generated per run.** No CA, no
+   revocation, and a client has to be handed the certificate out of band.
+   **Client certificates are deliberately absent**: they authenticate machines,
+   and a terminal authenticates people — issuing one per operator is the identity
+   lifecycle above.
+4. **No CSRF protection and no origin checking.** It matters the moment the
+   terminal is served anywhere a browser can reach it from another page, and the
+   fix is a same-site cookie plus an origin check rather than the bearer token
+   used here. Lockout state also lives in process memory, so bouncing the service
+   clears it.
+5. **One process, one lock**, which serialises every write. Correct, and it does
+   not scale.
+6. **Backward scheduling is infinite-capacity.** It gives a bound — a job that
    cannot make its date with every machine free will certainly not make it with
    the machines there are — and a genuine backward pass over a contended shop is
    a harder problem that would need the forward and backward passes to iterate.
-5. **Sequencing is still non-delay and single-pass.** A machine never idles
+7. **Sequencing is still non-delay and single-pass.** A machine never idles
    waiting for a better job, which is what a shop floor does and not always what
    is optimal, and nothing re-plans when reality diverges from the plan.
-6. **ML-1 publishes a fleet interval, not per-asset RUL.** Every asset in the
+8. **ML-1 publishes a fleet interval, not per-asset RUL.** Every asset in the
    maintenance feed therefore carries the same prediction. The provenance and
    dispositioning path is real; per-asset prediction is not, and closing that
    needs ML-1 to publish per-unit rows.
-7. **The equipment feed is a file, read on demand.** DATA-1's historian is polled
+9. **The equipment feed is a file, read on demand.** DATA-1's historian is polled
    rather than subscribed to, so freshness is whatever the last write left
    behind — which is exactly why the stale path exists and why it is exercised.
-8. **Still one plant, one week of generated history.** The scale test grows the
-   genealogy table to millions of rows to measure the query, but the *execution*
-   path has never run at that size.
+10. **Still one plant, one week of generated history.** The scale test grows the
+    genealogy table to millions of rows to measure the query, but the *execution*
+    path has never run at that size.
 
 ## Layout
 
@@ -360,6 +371,7 @@ src/scheduling.py  shift calendar (both directions), dispatch rules, transaction
 src/planning.py    routing from the DB, setup matrix, operators, backward scheduling
 src/server.py      the terminal's write path: sessions, and every write via execution.py
 src/integration.py DATA-1's historian and ML-1's registry, read as published files
+src/auth.py       badge+PIN credentials, lockout, session expiry, TLS contexts
 run_mes.py         orchestration; writes docs/RESULTS.md
 run_pass4.py       planning, the write path, the connections; writes the pass-4 doc
 ```
