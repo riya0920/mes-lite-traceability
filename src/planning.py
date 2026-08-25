@@ -200,9 +200,13 @@ UNLIMITED = _Unlimited()
 # forward finite-capacity schedule
 # ---------------------------------------------------------------------------
 
+PLAN_RULE = "PLAN"
+
+
 def schedule_finite(jobs: list, capacity: dict, rule: str = "FIFO",
                     calendar=None, setups: SetupMatrix | None = None,
-                    operators: OperatorPool | None = None) -> dict:
+                    operators: OperatorPool | None = None,
+                    priority: dict | None = None) -> dict:
     """Non-delay forward schedule over machines AND operators, with setups.
 
     Non-delay is inherited from `scheduling.schedule()` deliberately: a machine
@@ -211,7 +215,10 @@ def schedule_finite(jobs: list, capacity: dict, rule: str = "FIFO",
     it is what a shop floor produces, and changing it here would confound the
     effect being measured with a change of policy.
     """
-    if rule not in S.DISPATCH_RULES:
+    if rule == PLAN_RULE:
+        if not priority:
+            raise ValueError("the PLAN rule needs a priority per job")
+    elif rule not in S.DISPATCH_RULES:
         raise ValueError(f"unknown dispatch rule {rule!r}")
     ops_pool = operators or UNLIMITED
     unlimited = isinstance(ops_pool, _Unlimited)
@@ -230,7 +237,16 @@ def schedule_finite(jobs: list, capacity: dict, rule: str = "FIFO",
     operator_wait = 0.0
     uncovered = []
 
-    def priority(jid, op, now):
+    def prio(jid, op, now):
+        if rule == PLAN_RULE:
+            # Whatever the planner worked out, used directly. This is the hook
+            # the iteration needs: without it, reordering the job list changes
+            # nothing, because the scheduler re-sorts by its own rule and the
+            # order it was handed is discarded. The first version of
+            # `iterate_passes` did exactly that and reported no improvement --
+            # correctly, because it was measuring the same schedule twelve
+            # times.
+            return priority[jid]
         if rule == "FIFO":
             return ready[jid]
         if rule == "SPT":
@@ -273,7 +289,7 @@ def schedule_finite(jobs: list, capacity: dict, rule: str = "FIFO",
             starts[jid] = max(ready[jid], min(free.get(op.wc, [0.0])))
         now = min(starts.values())
         available = [(jid, op) for jid, op in cands if starts[jid] <= now + _EPS]
-        jid, op = min(available, key=lambda c: priority(c[0], c[1], now))
+        jid, op = min(available, key=lambda c: prio(c[0], c[1], now))
 
         m_idx, setup_end, setup_min = machine_ready(jid, op.wc, op)
         machines = free[op.wc]
@@ -423,3 +439,118 @@ def reconcile_forward_backward(jobs: list, capacity: dict, rule: str = "EDD",
                                           if k != "schedule"},
             "per_job": rows,
             "mean_inflation": sum(r["inflation"] for r in rows) / max(len(rows), 1)}
+
+
+# ---------------------------------------------------------------------------
+# iterating the two passes
+# ---------------------------------------------------------------------------
+
+def iterate_passes(jobs: list, capacity: dict, *, calendar=None,
+                   setups: SetupMatrix | None = None,
+                   operators: OperatorPool | None = None,
+                   rule: str = "EDD", max_rounds: int = 12,
+                   damping: float = 0.5, control_release: bool = True) -> dict:
+    """Backward, then forward, then backward again -- until it stops moving.
+
+    THE PROBLEM WITH ONE PASS OF EACH. The backward pass is infinite-capacity, so
+    its release dates assume no queueing. The forward pass then discovers the
+    queueing and every job finishes later than the backward pass promised. Doing
+    each once produces two numbers that disagree and no way to reconcile them,
+    which is what `reconcile_forward_backward` reports and cannot fix.
+
+    THE FIX. The information the backward pass lacks is how much QUEUE each job
+    will meet; the forward pass measures exactly that. Each round feeds the
+    previous round's measured queue back into the backward pass as an allowance,
+    and the resulting release dates do two things:
+
+      * they ORDER the forward pass, through the PLAN dispatch rule. This is the
+        part the first version got wrong -- it reordered the job list and handed
+        it to a scheduler that re-sorts by EDD, so twelve rounds measured the
+        same schedule twelve times and correctly reported no improvement.
+      * they optionally CONTROL RELEASE: a job whose latest start is in the
+        future is held back rather than queued, which is input-output control
+        and the actual shop-floor use of a backward pass. Holding a job out of
+        the queue is the only lever that reduces everyone else's waiting.
+
+    WHAT IT CONVERGES TO. A fixed point of a heuristic, not an optimum. Releasing
+    one job earlier changes another's queue, so the allowances interact;
+    `damping` below 1 moves partway each round, which is what stops two jobs
+    trading places forever. Non-convergence is reported rather than hidden.
+    """
+    if not 0.0 < damping <= 1.0:
+        raise ValueError("damping must be in (0, 1]")
+
+    allowance = {j.job_id: 0.0 for j in jobs}
+    history = []
+    best = None
+    converged = False
+
+    for rnd in range(max_rounds):
+        release = {}
+        for j in jobs:
+            b = backward_from_due(j, calendar, setups)
+            release[j.job_id] = b["latest_release"] - allowance[j.job_id]
+
+        staged = []
+        for j in jobs:
+            # Never release EARLIER than the material allows; the backward pass
+            # can ask for a start in the past and the shop cannot supply one.
+            rel = (max(j.released, min(release[j.job_id], j.due))
+                   if control_release else j.released)
+            staged.append(PlanJob(job_id=j.job_id, sku=j.sku, qty=j.qty,
+                                  ops=j.ops, due=j.due, released=rel))
+
+        fwd = schedule_finite(staged, capacity, PLAN_RULE, calendar, setups,
+                              operators, priority=release)
+
+        # Queue measured from the release ACTUALLY USED this round, not from the
+        # job's original release. Using the original counts the time a job was
+        # deliberately held back as queue, which then releases it earlier next
+        # round, which puts it in the queue sooner, which raises everybody's
+        # measured queue -- a positive feedback loop with no restoring force.
+        # It oscillated between 662 and 1808 minutes of tardiness over forty
+        # rounds and never settled.
+        actual_release = {j.job_id: j.released for j in staged}
+        new_allow = {}
+        for j in jobs:
+            own = sum(o.run_min for o in j.ops)
+            flow = fwd["finish"][j.job_id] - actual_release[j.job_id]
+            new_allow[j.job_id] = max(0.0, flow - own)
+
+        moved = max(abs(new_allow[k] - allowance[k]) for k in allowance)
+        rec = {"round": rnd + 1,
+               "total_tardiness": fwd["total_tardiness"],
+               "n_late": fwd["n_late"],
+               "makespan": fwd["makespan"],
+               "max_allowance_move": moved,
+               "order": [k for k, _ in sorted(release.items(),
+                                              key=lambda kv: kv[1])]}
+        history.append(rec)
+
+        if best is None or fwd["total_tardiness"] < best["total_tardiness"]:
+            best = {"round": rnd + 1, "order": rec["order"],
+                    "total_tardiness": fwd["total_tardiness"],
+                    "n_late": fwd["n_late"], "makespan": fwd["makespan"],
+                    "finish": dict(fwd["finish"])}
+
+        if moved < 1e-6:
+            converged = True
+            break
+        for k in allowance:
+            allowance[k] += damping * (new_allow[k] - allowance[k])
+
+    single = schedule_finite(jobs, capacity, rule, calendar, setups, operators)
+    return {
+        "converged": converged, "rounds": len(history), "history": history,
+        "best": best, "baseline_rule": rule,
+        "single_pass": {"total_tardiness": single["total_tardiness"],
+                        "n_late": single["n_late"],
+                        "makespan": single["makespan"]},
+        "improvement_tardiness": single["total_tardiness"] - best["total_tardiness"],
+        "improved": best["total_tardiness"] < single["total_tardiness"] - 1e-9,
+        "damping": damping, "control_release": control_release,
+        "caveat": ("a fixed point of a heuristic, not an optimum: releasing one "
+                   "job earlier changes another's queue, so the allowances "
+                   "interact and damping is what stops two jobs trading places "
+                   "forever"),
+    }

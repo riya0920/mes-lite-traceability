@@ -316,6 +316,54 @@ carries the residue into the **next** window and returns a time a whole shift
 later, or after a weekend. 1052 of 4000 random round-trips failed before the
 tolerance went in, and the forward function had carried the bug since pass 1.
 
+## Also in the fifth pass — see [docs/ITERATED_PLANNING.md](docs/ITERATED_PLANNING.md)
+
+```bash
+python run_pass5.py
+```
+
+The backward pass was infinite-capacity, and the item said a real one *would need
+the forward and backward passes to iterate*. It iterates now: each round feeds the
+previous round's **measured queue** back into the backward pass as an allowance,
+and the release dates that come out both order the forward pass (through a `PLAN`
+dispatch rule) and control release — a job whose latest start is in the future is
+held back rather than queued.
+
+| release stagger | single: tardiness | late | iterated | late | better? |
+|---:|---:|---:|---:|---:|:--:|
+| 0 min | 238.3 | 6 | 724.4 | 7 | ❌ |
+| 15 min | 295.8 | 7 | 395.4 | 6 | ❌ |
+| 30 min | 116.5 | 2 | 77.6 | 3 | ✅ |
+| 60 min | 43.5 | 2 | 0.0 | 0 | ✅ |
+| 120 min | 0.0 | 0 | 0.0 | 0 | — |
+| 240 min | 0.0 | 0 | 0.0 | 0 | — |
+
+**It helps at [30, 60] minutes of stagger and hurts at [0, 15].**
+At 60 minutes it removes the tardiness entirely; at zero it makes things three
+times worse — and **every earlier pass in this project used the zero-stagger
+instance**. With all twelve jobs available at time zero there is no release
+*timing* to optimise: the shop is capacity-bound from the first minute, the only
+lever is sequence, and EDD already sequences by the same information a backward
+pass would produce. Holding a job back can only make it later.
+
+The ablation says which half does the work: ordering alone reproduces the single
+pass exactly (release order and due-date order are the same order here), so all
+of the gain is the release control.
+
+**It does not converge at any damping tested**, and that is reported rather than
+smoothed. The allowances genuinely interact — releasing one job earlier changes
+another's queue — so this is returned as a **search** with the best round kept
+and a `converged` flag, not as a fixed-point algorithm.
+
+### Two bugs that both made it look like it did nothing
+
+The first version reordered the job list and handed it to a scheduler that
+re-sorts by its own rule; twelve rounds measured the same schedule twelve times.
+The second measured queue from the job's *original* release, so time a job was
+deliberately held back counted as queue, released it earlier next round, and fed
+back on itself — tardiness oscillated between 662 and 1,808 minutes over forty
+rounds. Both have named tests.
+
 ## What is NOT built
 
 1. **Not 21 CFR Part 11 compliant, and authentication does not change that.**
@@ -342,10 +390,10 @@ tolerance went in, and the forward function had carried the bug since pass 1.
    clears it.
 5. **One process, one lock**, which serialises every write. Correct, and it does
    not scale.
-6. **Backward scheduling is infinite-capacity.** It gives a bound — a job that
-   cannot make its date with every machine free will certainly not make it with
-   the machines there are — and a genuine backward pass over a contended shop is
-   a harder problem that would need the forward and backward passes to iterate.
+6. **The iterated planner is a search, not a fixed point.** No damping tested
+   converges, so it returns the best round of N with a `converged` flag rather
+   than a settled plan. And it only pays when releases are staggered — on the
+   all-available-at-once instance it is worse than a single pass.
 7. **Sequencing is still non-delay and single-pass.** A machine never idles
    waiting for a better job, which is what a shop floor does and not always what
    is optimal, and nothing re-plans when reality diverges from the plan.
