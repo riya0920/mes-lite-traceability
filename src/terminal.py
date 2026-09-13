@@ -52,7 +52,7 @@ def render(path, res: dict) -> dict:
     gate_rows = "".join(
         f'<tr><td>{html.escape(a["wc"])}</td><td>{html.escape(a["state"])}</td>'
         f'<td>{"<span class=ok>start</span>" if a["allowed"] else "<span class=no>BLOCKED</span>"}</td>'
-        f'<td>{html.escape(a["reason"] or "—")}</td></tr>'
+        f'<td>{html.escape(a["reason"] or "N/A")}</td></tr>'
         for a in ig.get("gate_attempts", []))
 
     mwo_rows = "".join(
@@ -72,9 +72,9 @@ def render(path, res: dict) -> dict:
     routing = [
         ("10", "OP-01", "WC-CUT", "done", "STEEL-BAR L-4471-A x1", 1),
         ("20", "OP-02", "WC-WELD", "done", "WIRE L-7001 x0.4, GAS L-7002 x2.0", 1),
-        ("30", "OP-04", "WC-MACH", "done", "—", 1),
+        ("30", "OP-04", "WC-MACH", "done", "N/A", 1),
         ("40", "OP-05", "WC-PAINT", "done (pass 1)", "POWDER L-7003 x0.15", 1),
-        ("50", "OP-03", "WC-INSP", "NCR — rework to op 40", "—", 1),
+        ("50", "OP-03", "WC-INSP", "NCR: rework to op 40", "N/A", 1),
         ("40", "OP-01", "WC-PAINT", "NEXT (pass 2)", "POWDER L-7003 x0.15", 2),
     ]
     rt_rows = "".join(
@@ -120,11 +120,11 @@ button{{padding:8px 14px;border:1px solid var(--line);background:transparent;
 </style>
 <h1>Operator terminal</h1>
 <div class="sub">WO-1001-U07 &middot; BRKT-100 &middot; rendered by
- <code>complete.py</code> — read-only, see the note below</div>
+ <code>complete.py</code>, read-only, see the note below</div>
 
 <div class="grid">
   <div class="card wide">
-    <h2>Routing and progress — unit WO-1001-U07</h2>
+    <h2>Routing and progress: unit WO-1001-U07</h2>
     <table><thead><tr><th class="n">seq</th><th>operator</th><th>work centre</th>
       <th>status</th><th>material at THIS operation</th></tr></thead>
       <tbody>{rt_rows}</tbody></table>
@@ -137,13 +137,13 @@ button{{padding:8px 14px;border:1px solid var(--line);background:transparent;
     </div>
     <div class="note"><b>The pass-2 badge is the point of this screen.</b> An
      operator who cannot see that a unit has been here before will repeat
-     whatever was done last time — and the material list is per OPERATION, not
+     whatever was done last time, and the material list is per OPERATION, not
      per order, because consumption is recorded at the operation and a screen
      showing the whole BOM invites booking it at the wrong step.</div>
   </div>
 
   <div class="card">
-    <h2>Dispatch list — hours, not job count</h2>
+    <h2>Dispatch list: hours, not job count</h2>
     <table><thead><tr><th>work centre</th><th class="n">hours queued</th>
       <th class="n">machines</th><th class="n">hours/machine</th></tr></thead>
       <tbody>{load_rows}</tbody></table>
@@ -180,7 +180,7 @@ button{{padding:8px 14px;border:1px solid var(--line);background:transparent;
     <p style="font-size:13px">{html.escape(sg.get('summary', ''))}</p>
     <div class="note"><b>This page renders state and does not write.</b> Wiring
      the buttons to <code>execution.py</code> needs a server, and a UI whose
-     buttons silently no-op would be worse than no UI — an operator who presses
+     buttons silently no-op would be worse than no UI: an operator who presses
      Complete and sees nothing happen will conclude the system is broken and
      start keeping a paper log, which is the failure this project exists to
      prevent.</div>

@@ -224,7 +224,7 @@ def report(d: dict) -> str:
       "`(seq, work_centre, minutes)` triples. The database beside it has always "
       "had `operation.std_setup_s`, `operation.cert_required`, "
       "`work_center.capacity` and a `certification` table, and the scheduler "
-      "used none of them — so its plans came from a routing that resembled the "
+      "used none of them, so its plans came from a routing that resembled the "
       "real one rather than being it.\n")
     A("`planning.schedule_finite` with no setup matrix and unlimited operators "
       "reproduces the old scheduler **operation for operation on all four "
@@ -253,7 +253,7 @@ def report(d: dict) -> str:
       f"(+{d_ops:.0f} minutes against +{d_set:.0f} on EDD), and nothing in a "
       "capacity number says so. The reason is in the certification table: "
       + ", ".join(f"{c} has {n} holders" for c, n in pl["coverage"].items())
-      + ", against five operators — one of whom holds nothing. A work centre "
+      + ", against five operators, one of whom holds nothing. A work centre "
       "with three machines and two certified people has a capacity of two.\n")
 
     zero = [r for r in S.DISPATCH_RULES
@@ -264,14 +264,14 @@ def report(d: dict) -> str:
           + ", ".join(f"{r} misses {both[r]['n_late']}" for r in zero)
           + f" of {pl['n_jobs']}. A planner whose constraints are optional "
           "produces a promise nobody can keep, and it produces it in the most "
-          "convincing possible form — zero.\n")
+          "convincing possible form: zero.\n")
 
     at = pl["attend"]
     A(f"\n**Whether the operator stays for the whole operation or only the "
       f"setup moves the makespan from {at['all']:.0f} to {at['setup']:.0f} "
       f"minutes ({100 * (at['all'] - at['setup']) / at['all']:.0f}%).** Both are "
-      "real — a CNC cell is set up attended and then runs unattended, a manual "
-      "weld is attended throughout — so it is a parameter rather than an "
+      "real: a CNC cell is set up attended and then runs unattended, a manual "
+      "weld is attended throughout, so it is a parameter rather than an "
       "assumption buried in the loop.\n")
 
     A("\n### Backward scheduling\n")
@@ -280,7 +280,7 @@ def report(d: dict) -> str:
       f"{inf['critical_path_minutes']:.0f} minutes of work: latest release "
       f"**{inf['latest_release']:.0f} minutes**, i.e. "
       f"{abs(inf['latest_release']) / 60:.1f} hours before now. Infeasible with "
-      "every machine free, so certainly infeasible with the machines there are — "
+      "every machine free, so certainly infeasible with the machines there are, "
       "and that answer is available before anybody looks at a queue.\n")
     A(f"- Across the order book, the finite-capacity forward pass takes "
       f"**{pl['reconcile']['mean_inflation']:.2f}× the infinite-capacity "
@@ -290,13 +290,13 @@ def report(d: dict) -> str:
     cal = pl["calendar"]
     A(f"- Putting the shift calendar back in inflates the makespan from "
       f"{cal['without_minutes']:.0f} to {cal['with_minutes']:.0f} minutes "
-      f"({cal['inflation']:.2f}×) — nights, weekends and two breaks a shift.\n")
+      f"({cal['inflation']:.2f}×): nights, weekends and two breaks a shift.\n")
 
     A("\n**A bug found building the backward walk.** `add_working_minutes` "
       "compared `remaining <= avail`, and both are minute counts in the tens of "
       "thousands, so work that exactly fills a shift window compares as *longer* "
       "than the window by about 1e-12. The fall-through does not lose a "
-      "picosecond — it carries the residue into the **next** window and returns "
+      "picosecond; it carries the residue into the **next** window and returns "
       "a time a whole shift later, or after a weekend. 1052 of 4000 random "
       "round-trips failed before the tolerance went in, and the forward function "
       "had carried the same latent bug since pass 1.\n")
@@ -312,23 +312,23 @@ def report(d: dict) -> str:
     A("Every write goes through `execution.py`; the handler's only job is to "
       "turn a refusal into a 409 with the reason intact. That is tested by "
       "monkeypatching the check in `execution.py` and watching the same HTTP "
-      "request start succeeding — if the server held its own copy of the rule, "
+      "request start succeeding, if the server held its own copy of the rule, "
       "it would not.\n")
     A("\n| step | status | outcome |")
     A("|---|---:|---|")
     for r in tm["log"]:
-        msg = (r["message"] or ("accepted" if r["ok"] else "—"))
+        msg = (r["message"] or ("accepted" if r["ok"] else "N/A"))
         msg = msg if len(msg) < 110 else msg[:107] + "…"
         A(f"| {r['step']} | {r['status']} | {msg} |")
     A(f"\nAfter all of that, `op_record` holds **{tm['completions_recorded']} "
       "completion** for the unit, not two. The double-click is caught by "
       "`execution.py`'s conservation check before the `ux_one_complete_per_pass` "
-      "index is even reached — the index is the backstop for code that does not "
+      "index is even reached; the index is the backstop for code that does not "
       "come through here, not the path.\n")
     A("And `can_start` calls the same two functions the write path calls, so "
       "the greyed-out button and the refusal cannot disagree. The earlier "
-      "version's argument — that a blocked button with no explanation gets "
-      "worked around within a shift — is kept: the 409 carries the message "
+      "version's argument, that a blocked button with no explanation gets "
+      "worked around within a shift, is kept: the 409 carries the message "
       "naming the certification and how to override it.\n")
     A("\n**What this is not:**\n")
     for lim in tm["limits"]:
@@ -361,19 +361,19 @@ def report(d: dict) -> str:
         A("|---|---|---|")
         for a, b in zip(cn["gates_as_of_today"], cn["gates_as_of_the_data"]):
             A(f"| {a['wc']} | {a['state']}"
-              f"{' — allowed' if a['allowed'] else ' — BLOCKED'} | "
-              f"{b['state']}{' — allowed' if b['allowed'] else ' — BLOCKED'} |")
+              f"{': allowed' if a['allowed'] else ': BLOCKED'} | "
+              f"{b['state']}{': allowed' if b['allowed'] else ': BLOCKED'} |")
         A("\n**That third outcome is the whole difference.** The interface "
           "version gated on a dict of machine states that was always present, "
           "always current and always right. A real feed is none of those, and a "
           "gate that cannot tell *the weld cell is running* from *the weld cell "
-          "was running on Friday* is worse than no gate — it is a green light "
+          "was running on Friday* is worse than no gate: it is a green light "
           "with nothing behind it.\n")
         A("Stale fails **open**, and that is a real trade rather than a "
           "convenience: the cost is production recorded against a machine that "
           "was genuinely down while the feed was broken. Failing closed stops "
           "the plant every time a broker restarts, which is how an integration "
-          "gets switched off permanently — and then the gate protects nothing "
+          "gets switched off permanently, and then the gate protects nothing "
           "at all. The right-hand column is the same code reading the same file "
           "with the clock wound back to when the data was written, which is how "
           "you tell a stale feed from a stopped plant.\n")
@@ -390,7 +390,7 @@ def report(d: dict) -> str:
         A(f"- The work order records model name, version and fingerprint, so "
           "*why did we pull that machine* has an answer six months later. "
           "Deduplication is keyed on `(asset, source, model_version)` rather "
-          "than source alone — otherwise a retrained model could never escalate "
+          "than source alone; otherwise a retrained model could never escalate "
           "an asset that already has an open order, and *the new model says "
           "this is now urgent* is exactly the message that must get through.\n")
         A(f"- **Priority comes from the pessimistic end of the interval.** The "
@@ -408,7 +408,7 @@ def report(d: dict) -> str:
 
     A("\nEither project can be absent. With both paths pointing at nothing, the "
       "feeds report `available: false` with the reason, and the gate falls back "
-      "to the fail-open policy that was already documented — which a hard-coded "
+      "to the fail-open policy that was already documented, which a hard-coded "
       "dict could not do, because a literal is never missing.\n")
     return "\n".join(L) + "\n"
 

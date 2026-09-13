@@ -154,13 +154,13 @@ def report(d: dict) -> str:
       "allowance, and the release dates that come out do two jobs:\n")
     A("- they **order** the forward pass, through a `PLAN` dispatch rule")
     A("- they **control release**: a job whose latest start is in the future is "
-      "held back rather than queued — input-output control, and the actual "
+      "held back rather than queued: input-output control, and the actual "
       "shop-floor use of a backward pass\n")
 
     A("\n### Two bugs on the way, both of which made it look like it did nothing\n")
     A("**The first version reordered the job list and handed it to a scheduler "
       "that re-sorts by EDD.** Twelve rounds measured the same schedule twelve "
-      "times and reported no improvement — correctly, and for a reason that had "
+      "times and reported no improvement, correctly, and for a reason that had "
       "nothing to do with the algorithm. That is what the `PLAN` rule is for.\n")
     A("**The second measured queue from the job's original release**, not the "
       "release actually used. Time a job was deliberately held back counted as "
@@ -176,18 +176,18 @@ def report(d: dict) -> str:
     A("|---:|---:|---:|---:|---:|:--:|")
     for r in sw["rows"]:
         mark = "✅" if r["improved"] else ("❌" if r["best_tardiness"] >
-                                          r["single_tardiness"] + 1e-9 else "—")
+                                          r["single_tardiness"] + 1e-9 else "N/A")
         A(f"| {r['stagger_min']} min | {r['single_tardiness']:.1f} | "
           f"{r['single_late']} | {r['best_tardiness']:.1f} | "
           f"{r['best_late']} | {mark} |")
     A(f"\n**Iterating helps at {sw['helped_at']} minutes of stagger and hurts at "
-      f"{sw['hurt_at']}.** At 60 minutes it removes the tardiness entirely — "
+      f"{sw['hurt_at']}.** At 60 minutes it removes the tardiness entirely: "
       "43.5 minutes across two late jobs becomes zero. At zero stagger it makes "
       "things three times worse.\n")
     A("**The explanation is structural, and it is why the sweep is the "
       "experiment.** Every earlier pass in this project used the zero-stagger "
       "instance: all twelve jobs available at time zero. There is no release "
-      "*timing* to optimise there — the shop is capacity-bound from the first "
+      "*timing* to optimise there: the shop is capacity-bound from the first "
       "minute, the only lever is sequence, and EDD already sequences by the "
       "same information a backward pass would produce. Holding a job back can "
       "only make it later.\n")
@@ -202,10 +202,10 @@ def report(d: dict) -> str:
     for k, v in ab.items():
         A(f"| {k} | {v['best_tardiness']:.1f} | {v['best_late']} |")
     A(f"| single pass, for reference | "
-      f"{list(ab.values())[0]['single_tardiness']:.1f} | — |")
+      f"{list(ab.values())[0]['single_tardiness']:.1f} | N/A |")
     only = ab.get("ordering only", {})
     A(f"\n**It is the release control, not the ordering.** Ordering by backward "
-      "release date alone reproduces the single pass exactly — because on this "
+      "release date alone reproduces the single pass exactly, because on this "
       "instance the release order and the due-date order are the same order, so "
       "the `PLAN` rule and EDD produce the same schedule. All of the gain comes "
       "from holding jobs back.\n")

@@ -4,7 +4,7 @@ The README said the terminal was read-only because wiring it to `execution.py`
 "needs a server and a session model, and the buttons are disabled rather than
 faked". Both halves of that are now built, and the session model is the half that
 mattered: every rule in `execution.py` that protects anything is a rule about
-*who* — is this operator certified, who approved the deviation, whose name goes
+*who*: is this operator certified, who approved the deviation, whose name goes
 on the audit row. A terminal with no identity can only write as "somebody", and a
 Part-11-shaped signature over an anonymous action is worse than no signature,
 because it looks like accountability.

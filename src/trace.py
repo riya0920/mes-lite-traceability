@@ -130,7 +130,7 @@ def birth_certificate(conn, unit_id: str) -> str:
     if not b:
         return f"unit {unit_id} not found"
     u = b["unit"]
-    L = [f"BUILD RECORD — unit {unit_id}",
+    L = [f"BUILD RECORD: unit {unit_id}",
          f"  product      : {u['sku']}",
          f"  work order   : {u['wo_id']} (order qty {u['wo_qty']})",
          f"  serial / lot : {u['serial'] or '-'} / {u['lot_qty'] or '-'}",

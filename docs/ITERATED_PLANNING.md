@@ -8,12 +8,12 @@ The README's item: *backward scheduling is infinite-capacity … a genuine backw
 The backward pass is missing one thing: how much **queue** each job will meet. The forward pass measures exactly that. So each round feeds the previous round's measured queue back into the backward pass as an allowance, and the release dates that come out do two jobs:
 
 - they **order** the forward pass, through a `PLAN` dispatch rule
-- they **control release**: a job whose latest start is in the future is held back rather than queued — input-output control, and the actual shop-floor use of a backward pass
+- they **control release**: a job whose latest start is in the future is held back rather than queued, input-output control, and the actual shop-floor use of a backward pass
 
 
 ### Two bugs on the way, both of which made it look like it did nothing
 
-**The first version reordered the job list and handed it to a scheduler that re-sorts by EDD.** Twelve rounds measured the same schedule twelve times and reported no improvement — correctly, and for a reason that had nothing to do with the algorithm. That is what the `PLAN` rule is for.
+**The first version reordered the job list and handed it to a scheduler that re-sorts by EDD.** Twelve rounds measured the same schedule twelve times and reported no improvement, correctly, and for a reason that had nothing to do with the algorithm. That is what the `PLAN` rule is for.
 
 **The second measured queue from the job's original release**, not the release actually used. Time a job was deliberately held back counted as queue, which released it earlier next round, which put it in the queue sooner, which raised everybody's measured queue: positive feedback with no restoring force. Tardiness oscillated between 662 and 1,808 minutes over forty rounds.
 
@@ -28,12 +28,12 @@ The backward pass is missing one thing: how much **queue** each job will meet. T
 | 15 min | 295.8 | 7 | 395.4 | 6 | ❌ |
 | 30 min | 116.5 | 2 | 77.6 | 3 | ✅ |
 | 60 min | 43.5 | 2 | 0.0 | 0 | ✅ |
-| 120 min | 0.0 | 0 | 0.0 | 0 | — |
-| 240 min | 0.0 | 0 | 0.0 | 0 | — |
+| 120 min | 0.0 | 0 | 0.0 | 0 | N/A |
+| 240 min | 0.0 | 0 | 0.0 | 0 | N/A |
 
-**Iterating helps at [30, 60] minutes of stagger and hurts at [0, 15].** At 60 minutes it removes the tardiness entirely — 43.5 minutes across two late jobs becomes zero. At zero stagger it makes things three times worse.
+**Iterating helps at [30, 60] minutes of stagger and hurts at [0, 15].** At 60 minutes it removes the tardiness entirely: 43.5 minutes across two late jobs becomes zero. At zero stagger it makes things three times worse.
 
-**The explanation is structural, and it is why the sweep is the experiment.** Every earlier pass in this project used the zero-stagger instance: all twelve jobs available at time zero. There is no release *timing* to optimise there — the shop is capacity-bound from the first minute, the only lever is sequence, and EDD already sequences by the same information a backward pass would produce. Holding a job back can only make it later.
+**The explanation is structural, and it is why the sweep is the experiment.** Every earlier pass in this project used the zero-stagger instance: all twelve jobs available at time zero. There is no release *timing* to optimise there: the shop is capacity-bound from the first minute, the only lever is sequence, and EDD already sequences by the same information a backward pass would produce. Holding a job back can only make it later.
 
 Give the releases some spread and the lever appears: a job held out of the queue is a job not adding to everyone else's waiting, which is the entire argument for input-output control. Past 120 minutes the shop is no longer contended and there is nothing left to fix.
 
@@ -44,9 +44,9 @@ Give the releases some spread and the lever appears: a job held out of the queue
 |---|---:|---:|
 | with release control | 0.0 | 0 |
 | ordering only | 43.5 | 2 |
-| single pass, for reference | 43.5 | — |
+| single pass, for reference | 43.5 | N/A |
 
-**It is the release control, not the ordering.** Ordering by backward release date alone reproduces the single pass exactly — because on this instance the release order and the due-date order are the same order, so the `PLAN` rule and EDD produce the same schedule. All of the gain comes from holding jobs back.
+**It is the release control, not the ordering.** Ordering by backward release date alone reproduces the single pass exactly, because on this instance the release order and the due-date order are the same order, so the `PLAN` rule and EDD produce the same schedule. All of the gain comes from holding jobs back.
 
 
 ## It does not converge, and that is reported rather than hidden

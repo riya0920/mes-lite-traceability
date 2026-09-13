@@ -1,4 +1,4 @@
-# SE-2 — MES-Lite: Work Order Execution & Traceability
+# SE-2, MES-Lite: Work Order Execution & Traceability
 
 **Status: complete.** The domain model, the execution rules with their refusals,
 consumption-at-operation genealogy, rework re-entry, and the one-command recall
@@ -27,13 +27,13 @@ WO-1002, and WO-1003 runs on clean `L-4998` as a control group.
 | **missed** | **0** |
 | **false positives** | **0** |
 | control group leaked in | 0 |
-| already shipped | 10 — Northwind Rail, Cascade Transit |
+| already shipped | 10: Northwind Rail, Cascade Transit |
 | finished on hand | 9 |
 | already scrapped | 1 |
 | **query time** | **0.7 ms** |
 
 **The split is what separates a working recall from a plausible one.** A query
-that stops at the named lot — `SELECT ... WHERE lot_id='L-4471'` — returns
+that stops at the named lot, `SELECT ... WHERE lot_id='L-4471'`, returns
 **0 units**. Not "fewer": zero. After the split, no consumption row cites L-4471
 at all, because every issue names a child lot. That query comes back clean, the
 recall is closed, and 20 units stay in the field.
@@ -75,13 +75,13 @@ which units were built while which lot was mounted.
 The last row is the politically important one. Operations will ask to skip an
 operation for a hot order, and both obvious answers are wrong: rigid refusal gets
 the system bypassed on paper, and a silent bypass destroys the record. The third
-option — a **deviation with an authorisation reference** — is allowed, is recorded
+option, a **deviation with an authorisation reference**, is allowed, is recorded
 on the operation, and appears on that unit's build record forever.
 
 ## Quantity conservation, and the category I was missing
 
 `started = completed + scrapped + nonconformances + in_process`, at every
-operation, counted from the append-only ledger rather than from a status column —
+operation, counted from the append-only ledger rather than from a status column,
 because a status column is a cache and this is what the cache is supposed to agree
 with. **0 violations across 17 (work order, operation) pairs.**
 
@@ -95,8 +95,8 @@ with. **0 violations across 17 (work order, operation) pairs.**
 
 The **nonconformances** column had to be added, and finding out why is the most
 useful thing this project did. Without it, a unit that failed inspection at op 50,
-was reworked, and came back to complete op 50 shows two starts and one completion
-— a phantom in-process balance of 2 on units that were sitting on the shipping
+was reworked, and came back to complete op 50 shows two starts and one completion:
+a phantom in-process balance of 2 on units that were sitting on the shipping
 dock. A pass that ended in an NCR was neither completed nor scrapped; it was
 *dispositioned*, and that is a fourth accounting category, not a rounding error.
 
@@ -109,24 +109,24 @@ operation it already completed, so it adds to the started side. Note op 40 shows
 Rework is a first-class routing event (`REWORK_ENTRY` in `op_record`), not a
 status flag. It has to be, for a specific reason: **the unit must be allowed to
 complete an operation it has already completed**, and every naive precedence and
-already-completed check refuses that — correctly, for a first pass. So
+already-completed check refuses that, correctly, for a first pass. So
 `complete_operation` compares against the most recent rework entry rather than
 against all history.
 
 Modelling rework as a status field is the common shortcut and it loses the
 operation history, which destroys the answer to "how many times did this unit go
-through op 40" — the first thing a quality engineer asks about a systemic defect.
+through op 40": the first thing a quality engineer asks about a systemic defect.
 
 **A bug this exposed.** The over-issue check was per unit lifetime, so the second
 dose of powder on a repainted bracket read as a 200% over-issue and the system
 refused it. That is not a strict system, it is an unusable one: the plant's
 response is to issue the material against some other unit, and the genealogy
-silently becomes fiction. The budget is now **per pass** — expected quantity
+silently becomes fiction. The budget is now **per pass**: expected quantity
 scales with `1 + rework entries at or before that operation`.
 
 **And the second pass found that this fix was still half wrong.** "Rework entries
 *at* that operation" was correct only for the one pattern the original generator
-produced — reworking a single step back. A unit sent from op 40 back to op 10 runs
+produced: reworking a single step back. A unit sent from op 40 back to op 10 runs
 ops 10, 20 and 30 again, and each legitimately consumes its materials again; the
 scope had to widen to `seq ≤ N`. Property testing with random re-entry points found
 it on the first case. Same story for the completion boundary. Both are covered by
@@ -163,20 +163,20 @@ for:
 
 ## Where MES ends and ERP begins
 
-This is **ISA-95 level 3** — manufacturing operations management, i.e. execution.
+This is **ISA-95 level 3**: manufacturing operations management, i.e. execution.
 Orders come *down* from ERP (level 4) with a quantity and a due date; completions,
 consumption and scrap go *up*. Planning, costing, purchasing, MRP and the general
 ledger are level 4 and are deliberately absent. A system that plans its own orders
 is not an MES.
 
-## Built in the second pass — see [docs/EXTENSIONS.md](docs/EXTENSIONS.md)
+## Built in the second pass: see [docs/EXTENSIONS.md](docs/EXTENSIONS.md)
 
-`python extend.py` — three gaps this README previously named, and the property
+`python extend.py`: three gaps this README previously named, and the property
 testing **found three real bugs in the execution rules**:
 
 - **The lot-tracked model, actually run.** It was defined and never exercised.
   Running it immediately exposed that `scrap()` killed the whole batch on a partial
-  scrap — 25 plates of 400 failing at drilling scrapped all 400.
+  scrap: 25 plates of 400 failing at drilling scrapped all 400.
 - **Property-based rework testing.** 200 randomly generated routing histories with
   0–3 rework loops re-entering at random earlier operations: **0 property
   failures, 0 conservation violations, 294 rework entries**. Getting there required
@@ -189,7 +189,7 @@ testing **found three real bugs in the execution rules**:
 - **A dispatch list**, derived entirely from the execution ledger so it cannot
   disagree with the record, sorted by hours per resource rather than unit count.
 
-## Completed in the third pass — see [docs/COMPLETION.md](docs/COMPLETION.md)
+## Completed in the third pass: see [docs/COMPLETION.md](docs/COMPLETION.md)
 
 ```bash
 python complete.py    # ~1 min (full run does 2M genealogy edges)
@@ -197,21 +197,21 @@ python complete.py    # ~1 min (full run does 2M genealogy edges)
 
 - **The concurrency test this README refused to fake.** It said the
   double-completion guard is a read-then-write with no transaction boundary and
-  that calling it race-safe would be an overclaim. Correct — and now measured.
+  that calling it race-safe would be an overclaim. Correct, and now measured.
   Eight threads released off a barrier, completing the same operation:
   **1 accepted, 7 refused** with the boundary in place;
   **8 accepted** without the unique index. `BEGIN IMMEDIATE` takes
   the write lock before the read; the index makes the invariant true in the
   *schema*, which is what holds against a client that forgets the transaction.
   The unique key is (unit, seq, **pass**), because a reworked unit legitimately
-  completes the same operation twice — the same insight the pass-2 rework bugs
+  completes the same operation twice: the same insight the pass-2 rework bugs
   turned on.
 - **Finite-capacity scheduling.** `work_center.capacity` had existed since pass 1
   and nothing read it. Finite-capacity flow time is
   **2.6× the infinite-capacity plan**, and
   **62% of it is queue time**. An
   infinite-capacity plan schedules three jobs onto one machine at 08:00 and
-  reports a date that assumes they all ran — not optimistic, arithmetically
+  reports a date that assumes they all ran: not optimistic, arithmetically
   impossible.
 - **Four dispatch rules compared, and none dominates.** FIFO, SPT, EDD and
   critical ratio, scored on makespan, mean flow time, maximum lateness and
@@ -223,7 +223,7 @@ python complete.py    # ~1 min (full run does 2M genealogy edges)
 - **Integration with DATA-1 and ML-1.** Equipment state gates operation starts
   (2 refused), and ML-1 alarms become maintenance work orders
   (2 created, 1 deduplicated).
-  An unknown state **fails open and is recorded** — failing closed on a missing
+  An unknown state **fails open and is recorded**: failing closed on a missing
   integration halts a plant because a message bus hiccupped, which is how an
   integration gets switched off permanently.
 - **Electronic signatures with a stated meaning, and a hash-linked audit chain.**
@@ -231,21 +231,21 @@ python complete.py    # ~1 min (full run does 2M genealogy edges)
   load-bearing phrase: a table anyone can UPDATE is not an audit log. Each row
   now carries its predecessor's hash, so an in-place edit to one row is
   **detected** (at row 3). Signatures carry signer,
-  timestamp and *meaning* — the third is the one that gets left out and the one
+  timestamp and *meaning*: the third is the one that gets left out and the one
   that matters in a deposition.
 - **The scale test.** 200,000 genealogy edges: the recall query takes
   **52 ms unindexed**,
   0.06 ms with an index on `lot_id`, and
   **0.03 ms with a covering index** on
-  `(lot_id, unit_id)` — which contains the answer, so the query never touches the
+  `(lot_id, unit_id)`, which contains the answer, so the query never touches the
   table. The README predicted the 0.7 ms figure would "change shape at millions
   of rows"; it does.
 - **An operator terminal** at `out/terminal.html`, self-contained. It renders
   state and does **not** write, because a UI whose buttons silently no-op is
-  worse than no UI — an operator who presses Complete and sees nothing will start
+  worse than no UI: an operator who presses Complete and sees nothing will start
   keeping a paper log, which is the failure this project exists to prevent.
 
-## Built in the fourth pass — see [docs/PLANNING_AND_CONNECTIONS.md](docs/PLANNING_AND_CONNECTIONS.md)
+## Built in the fourth pass: see [docs/PLANNING_AND_CONNECTIONS.md](docs/PLANNING_AND_CONNECTIONS.md)
 
 ```bash
 python run_pass4.py    # ~3 s
@@ -256,7 +256,7 @@ The last three items on the list below.
 - **The planner uses the routing that is in the database.** `scheduling.py` took
   synthetic `(seq, work_centre, minutes)` triples while the schema beside it
   already had `std_setup_s`, `cert_required`, `work_center.capacity` and a
-  `certification` table. `planning.schedule_finite` reads all of it — and with
+  `certification` table. `planning.schedule_finite` reads all of it, and with
   the constraints switched off it reproduces the old scheduler operation for
   operation on all four dispatch rules, which is what makes the difference
   attributable to the constraints rather than to a rewrite.
@@ -273,18 +273,18 @@ The last three items on the list below.
 - **Backward scheduling**, which is the direction that says you are already
   late: a rush order promised in 30 minutes
   needs 538, so its latest
-  release is **-508 minutes** —
+  release is **-508 minutes**:
   infeasible with every machine free, before anybody looks at a queue. Across
   the order book the finite forward pass takes
   **1.48×** the infinite-capacity promise,
   and that gap is queue.
 - **The terminal writes.** A session model, and every write routed through
-  `execution.py` — an uncertified operator gets a 409 carrying the reason and
+  `execution.py`: an uncertified operator gets a 409 carrying the reason and
   the override path, a deviation reference gets through, and a double-click
   leaves **1 completion** in `op_record`. That the
   server holds no rules of its own is tested by relaxing the check in
   `execution.py` and watching the same HTTP request start succeeding.
-- **The integrations are connections.** Not by importing another project —
+- **The integrations are connections.** Not by importing another project:
   by reading the artefact each one publishes. SE-2 opens DATA-1's
   `historian.db` read-only and derives machine state from the `State` tag, and
   reads ML-1's registry index to act only on a Production model
@@ -293,11 +293,11 @@ The last three items on the list below.
 ### And the connection found something on its first run
 
 DATA-1's newest reading is **5.3 days old**, so every work centre gates
-as `STALE` — a third outcome the interface version could not have, because a
+as `STALE`: a third outcome the interface version could not have, because a
 hard-coded dict of machine states is never stale, never missing and never wrong.
 A gate that cannot tell *the weld cell is running* from *the weld cell was
 running on Friday* is worse than no gate: it is a green light with nothing
-behind it. Stale fails **open**, and that is a trade rather than a convenience —
+behind it. Stale fails **open**, and that is a trade rather than a convenience:
 failing closed stops the plant every time a broker restarts, which is how an
 integration gets switched off permanently.
 
@@ -311,12 +311,12 @@ the time, and it is the half where the machine fails first.
 
 `add_working_minutes` compared `remaining <= avail`, both minute counts in the
 tens of thousands, so work that exactly fills a shift window compares as *longer*
-than the window by ~1e-12. The fall-through does not lose a picosecond — it
+than the window by ~1e-12. The fall-through does not lose a picosecond; it
 carries the residue into the **next** window and returns a time a whole shift
 later, or after a weekend. 1052 of 4000 random round-trips failed before the
 tolerance went in, and the forward function had carried the bug since pass 1.
 
-## Also in the fifth pass — see [docs/ITERATED_PLANNING.md](docs/ITERATED_PLANNING.md)
+## Also in the fifth pass: see [docs/ITERATED_PLANNING.md](docs/ITERATED_PLANNING.md)
 
 ```bash
 python run_pass5.py
@@ -326,7 +326,7 @@ The backward pass was infinite-capacity, and the item said a real one *would nee
 the forward and backward passes to iterate*. It iterates now: each round feeds the
 previous round's **measured queue** back into the backward pass as an allowance,
 and the release dates that come out both order the forward pass (through a `PLAN`
-dispatch rule) and control release — a job whose latest start is in the future is
+dispatch rule) and control release: a job whose latest start is in the future is
 held back rather than queued.
 
 | release stagger | single: tardiness | late | iterated | late | better? |
@@ -335,12 +335,12 @@ held back rather than queued.
 | 15 min | 295.8 | 7 | 395.4 | 6 | ❌ |
 | 30 min | 116.5 | 2 | 77.6 | 3 | ✅ |
 | 60 min | 43.5 | 2 | 0.0 | 0 | ✅ |
-| 120 min | 0.0 | 0 | 0.0 | 0 | — |
-| 240 min | 0.0 | 0 | 0.0 | 0 | — |
+| 120 min | 0.0 | 0 | 0.0 | 0 | N/A |
+| 240 min | 0.0 | 0 | 0.0 | 0 | N/A |
 
 **It helps at [30, 60] minutes of stagger and hurts at [0, 15].**
 At 60 minutes it removes the tardiness entirely; at zero it makes things three
-times worse — and **every earlier pass in this project used the zero-stagger
+times worse, and **every earlier pass in this project used the zero-stagger
 instance**. With all twelve jobs available at time zero there is no release
 *timing* to optimise: the shop is capacity-bound from the first minute, the only
 lever is sequence, and EDD already sequences by the same information a backward
@@ -351,8 +351,8 @@ pass exactly (release order and due-date order are the same order here), so all
 of the gain is the release control.
 
 **It does not converge at any damping tested**, and that is reported rather than
-smoothed. The allowances genuinely interact — releasing one job earlier changes
-another's queue — so this is returned as a **search** with the best round kept
+smoothed. The allowances genuinely interact, releasing one job earlier changes
+another's queue, so this is returned as a **search** with the best round kept
 and a `converged` flag, not as a fixed-point algorithm.
 
 ### Two bugs that both made it look like it did nothing
@@ -361,27 +361,27 @@ The first version reordered the job list and handed it to a scheduler that
 re-sorts by its own rule; twelve rounds measured the same schedule twelve times.
 The second measured queue from the job's *original* release, so time a job was
 deliberately held back counted as queue, released it earlier next round, and fed
-back on itself — tardiness oscillated between 662 and 1,808 minutes over forty
+back on itself: tardiness oscillated between 662 and 1,808 minutes over forty
 rounds. Both have named tests.
 
 ## What is NOT built
 
 1. **Not 21 CFR Part 11 compliant, and authentication does not change that.**
-   The terminal now takes a badge and a PIN — PBKDF2-HMAC-SHA256 at 200k
+   The terminal now takes a badge and a PIN, PBKDF2-HMAC-SHA256 at 200k
    iterations, per-operator salt, constant-time comparison, lockout after five
-   failures, session expiry — and serves over TLS. Part 11 wants an *identity
+   failures, session expiry, and serves over TLS. Part 11 wants an *identity
    lifecycle*: an authority issuing and revoking credentials, periodic access
    review, a password policy, and a validation package for the software that
    enforces them. This is the mechanism such a programme sits on; a mechanism
    without a programme is not compliance.
 2. **The hash chain makes tampering detectable, not impossible.** An attacker
    who can rewrite the whole table can recompute the whole chain. What it defeats
-   is the realistic case — a targeted edit to one inconvenient row — and it
+   is the realistic case, a targeted edit to one inconvenient row, and it
    forces the harder case to leave traces in backups and replicas.
 3. **The TLS certificate is self-signed and generated per run.** No CA, no
    revocation, and a client has to be handed the certificate out of band.
    **Client certificates are deliberately absent**: they authenticate machines,
-   and a terminal authenticates people — issuing one per operator is the identity
+   and a terminal authenticates people: issuing one per operator is the identity
    lifecycle above.
 4. **No CSRF protection and no origin checking.** It matters the moment the
    terminal is served anywhere a browser can reach it from another page, and the
@@ -392,7 +392,7 @@ rounds. Both have named tests.
    not scale.
 6. **The iterated planner is a search, not a fixed point.** No damping tested
    converges, so it returns the best round of N with a `converged` flag rather
-   than a settled plan. And it only pays when releases are staggered — on the
+   than a settled plan. And it only pays when releases are staggered; on the
    all-available-at-once instance it is worse than a single pass.
 7. **Sequencing is still non-delay and single-pass.** A machine never idles
    waiting for a better job, which is what a shop floor does and not always what
@@ -403,7 +403,7 @@ rounds. Both have named tests.
    needs ML-1 to publish per-unit rows.
 9. **The equipment feed is a file, read on demand.** DATA-1's historian is polled
    rather than subscribed to, so freshness is whatever the last write left
-   behind — which is exactly why the stale path exists and why it is exercised.
+   behind, which is exactly why the stale path exists and why it is exercised.
 10. **Still one plant, one week of generated history.** The scale test grows the
     genealogy table to millions of rows to measure the query, but the *execution*
     path has never run at that size.
