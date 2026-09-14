@@ -1,4 +1,4 @@
-BUILD RECORD — unit WO-1001-U004
+BUILD RECORD: unit WO-1001-U004
   product      : BRKT-100
   work order   : WO-1001 (order qty 12)
   serial / lot : SN1001004 / -

@@ -33,14 +33,14 @@ button{padding:8px 14px;border:1px solid var(--line);background:transparent;
 </style>
 <h1>Operator terminal</h1>
 <div class="sub">WO-1001-U07 &middot; BRKT-100 &middot; rendered by
- <code>complete.py</code> — read-only, see the note below</div>
+ <code>complete.py</code>, read-only, see the note below</div>
 
 <div class="grid">
   <div class="card wide">
-    <h2>Routing and progress — unit WO-1001-U07</h2>
+    <h2>Routing and progress: unit WO-1001-U07</h2>
     <table><thead><tr><th class="n">seq</th><th>operator</th><th>work centre</th>
       <th>status</th><th>material at THIS operation</th></tr></thead>
-      <tbody><tr class=""><td class="n">10</td><td>OP-01</td><td>WC-CUT</td><td>done</td><td class="mat">STEEL-BAR L-4471-A x1</td></tr><tr class=""><td class="n">20</td><td>OP-02</td><td>WC-WELD</td><td>done</td><td class="mat">WIRE L-7001 x0.4, GAS L-7002 x2.0</td></tr><tr class=""><td class="n">30</td><td>OP-04</td><td>WC-MACH</td><td>done</td><td class="mat">—</td></tr><tr class=""><td class="n">40</td><td>OP-05</td><td>WC-PAINT</td><td>done (pass 1)</td><td class="mat">POWDER L-7003 x0.15</td></tr><tr class=""><td class="n">50</td><td>OP-03</td><td>WC-INSP</td><td>NCR — rework to op 40</td><td class="mat">—</td></tr><tr class="next"><td class="n">40</td><td>OP-01</td><td>WC-PAINT</td><td>NEXT (pass 2) <span class=pass>pass 2</span></td><td class="mat">POWDER L-7003 x0.15</td></tr></tbody></table>
+      <tbody><tr class=""><td class="n">10</td><td>OP-01</td><td>WC-CUT</td><td>done</td><td class="mat">STEEL-BAR L-4471-A x1</td></tr><tr class=""><td class="n">20</td><td>OP-02</td><td>WC-WELD</td><td>done</td><td class="mat">WIRE L-7001 x0.4, GAS L-7002 x2.0</td></tr><tr class=""><td class="n">30</td><td>OP-04</td><td>WC-MACH</td><td>done</td><td class="mat">N/A</td></tr><tr class=""><td class="n">40</td><td>OP-05</td><td>WC-PAINT</td><td>done (pass 1)</td><td class="mat">POWDER L-7003 x0.15</td></tr><tr class=""><td class="n">50</td><td>OP-03</td><td>WC-INSP</td><td>NCR: rework to op 40</td><td class="mat">N/A</td></tr><tr class="next"><td class="n">40</td><td>OP-01</td><td>WC-PAINT</td><td>NEXT (pass 2) <span class=pass>pass 2</span></td><td class="mat">POWDER L-7003 x0.15</td></tr></tbody></table>
     <div class="btns">
       <button disabled>Start op 40</button>
       <button disabled>Issue POWDER L-7003</button>
@@ -50,13 +50,13 @@ button{padding:8px 14px;border:1px solid var(--line);background:transparent;
     </div>
     <div class="note"><b>The pass-2 badge is the point of this screen.</b> An
      operator who cannot see that a unit has been here before will repeat
-     whatever was done last time — and the material list is per OPERATION, not
+     whatever was done last time, and the material list is per OPERATION, not
      per order, because consumption is recorded at the operation and a screen
      showing the whole BOM invites booking it at the wrong step.</div>
   </div>
 
   <div class="card">
-    <h2>Dispatch list — hours, not job count</h2>
+    <h2>Dispatch list: hours, not job count</h2>
     <table><thead><tr><th>work centre</th><th class="n">hours queued</th>
       <th class="n">machines</th><th class="n">hours/machine</th></tr></thead>
       <tbody><tr><td>WC-CUT</td><td class="n">16.0</td><td class="n">2</td><td class="n">8.0</td></tr><tr><td>WC-MACH</td><td class="n">16.0</td><td class="n">2</td><td class="n">8.0</td></tr><tr><td>WC-WELD</td><td class="n">8.0</td><td class="n">1</td><td class="n">8.0</td></tr><tr><td>WC-PAINT</td><td class="n">8.0</td><td class="n">1</td><td class="n">8.0</td></tr><tr><td>WC-INSP</td><td class="n">8.0</td><td class="n">1</td><td class="n">8.0</td></tr></tbody></table>
@@ -68,7 +68,7 @@ button{padding:8px 14px;border:1px solid var(--line);background:transparent;
   <div class="card">
     <h2>Equipment gate (from DATA-1)</h2>
     <table><thead><tr><th>work centre</th><th>state</th><th>start</th>
-      <th>reason</th></tr></thead><tbody><tr><td>WC-CUT</td><td>RUNNING</td><td><span class=ok>start</span></td><td>—</td></tr><tr><td>WC-WELD</td><td>UNPLANNED_DOWN</td><td><span class=no>BLOCKED</span></td><td>WC-WELD is UNPLANNED_DOWN</td></tr><tr><td>WC-PAINT</td><td>PLANNED_STOP</td><td><span class=no>BLOCKED</span></td><td>WC-PAINT is PLANNED_STOP</td></tr><tr><td>WC-GRIND</td><td>UNKNOWN</td><td><span class=ok>start</span></td><td>WC-GRIND state unknown -- allowed, but recorded</td></tr></tbody></table>
+      <th>reason</th></tr></thead><tbody><tr><td>WC-CUT</td><td>RUNNING</td><td><span class=ok>start</span></td><td>N/A</td></tr><tr><td>WC-WELD</td><td>UNPLANNED_DOWN</td><td><span class=no>BLOCKED</span></td><td>WC-WELD is UNPLANNED_DOWN</td></tr><tr><td>WC-PAINT</td><td>PLANNED_STOP</td><td><span class=no>BLOCKED</span></td><td>WC-PAINT is PLANNED_STOP</td></tr><tr><td>WC-GRIND</td><td>UNKNOWN</td><td><span class=ok>start</span></td><td>WC-GRIND state unknown -- allowed, but recorded</td></tr></tbody></table>
     <div class="note">A blocked button with no explanation gets worked around
      within a shift. The reason is what gets a supervisor instead.</div>
   </div>
@@ -93,7 +93,7 @@ button{padding:8px 14px;border:1px solid var(--line);background:transparent;
     <p style="font-size:13px">6 records signed with a stated meaning, chain intact before tampering (True), broken and detected after (True)</p>
     <div class="note"><b>This page renders state and does not write.</b> Wiring
      the buttons to <code>execution.py</code> needs a server, and a UI whose
-     buttons silently no-op would be worse than no UI — an operator who presses
+     buttons silently no-op would be worse than no UI: an operator who presses
      Complete and sees nothing happen will conclude the system is broken and
      start keeping a paper log, which is the failure this project exists to
      prevent.</div>
