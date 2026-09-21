@@ -1,4 +1,4 @@
-# SE-2, MES-Lite: Work Order Execution & Traceability
+# MES-Lite: Work Order Execution & Traceability
 
 ## What it is
 
