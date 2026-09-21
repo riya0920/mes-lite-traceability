@@ -29,8 +29,8 @@ they now?"**
    shift calendars, and forward and backward planning.
 7. **Added an operator terminal** (web page) with badge + PIN login, TLS, and a
    tamper-evident audit log.
-8. **Connected it to two sister projects**: machine state from DATA-1 and
-   maintenance alerts from ML-1.
+8. **Connected it to two sister projects**: machine state from the [Plant Data Platform](https://github.com/riya0920/plant-oee-platform) and
+   maintenance alerts from the [Predictive Maintenance Platform](https://github.com/riya0920/predictive-maintenance-rul-platform).
 
 Work was done in five passes. Each pass re-tested the claims of the one before,
 and several found real bugs.
@@ -112,7 +112,7 @@ A unique index still holds when some other client forgets the transaction.
 
 **If a connected system is stale or missing, fail open and log it.**
 Stopping the plant every time a message bus hiccups gets the integration
-switched off for good. On its first real run, DATA-1's latest reading was 5.3
+switched off for good. On its first real run, the Plant Data Platform's latest reading was 5.3
 days old, so every machine correctly showed as `STALE`.
 
 **Plan from the pessimistic end of the maintenance forecast.**
@@ -136,7 +136,7 @@ as converged.
 - The audit chain makes edits **detectable, not impossible**.
 - TLS certificate is self-signed. No CSRF or origin checks yet.
 - One process, one write lock. Correct, but it does not scale.
-- ML-1 gives one forecast for the whole fleet, not one per machine.
+- The Predictive Maintenance Platform gives one forecast for the whole fleet, not one per machine.
 - Test data is one plant and one generated week. The execution path has not run
   at millions of rows (only the recall query has).
 
@@ -168,5 +168,5 @@ src/scheduling.py   shift calendar, dispatch rules
 src/planning.py     planning from the real routing, operators, backward pass
 src/server.py       operator terminal; every write goes through execution.py
 src/auth.py         badge + PIN login, lockout, TLS
-src/integration.py  reads DATA-1 and ML-1 outputs
+src/integration.py  reads the Plant Data Platform and Predictive Maintenance outputs
 ```
